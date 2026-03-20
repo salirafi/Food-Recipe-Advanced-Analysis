@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Portfolio</title>
+  <title>Recipe Bloom · Analysis</title>
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
@@ -11,26 +11,108 @@
 </head>
 <body>
 
-<!-- <nav>
-  <div class="nav-logo">alex<span>studio</span></div>
-  <ul class="nav-links">
-    <li><a href="#" class="active">Work</a></li>
-    <li><a href="#">About</a></li>
-    <li><a href="#">Data</a></li>
-    <li><a href="#">Contact</a></li>
-  </ul>
-</nav> -->
+<!-- ══════════════════════════════════════════════════════
+     LEFT SIDEBAR NAV
+     ══════════════════════════════════════════════════════ -->
+<nav class="sidenav" id="sidenav">
 
+  <!-- Collapse/expand toggle -->
+  <button class="sidenav-toggle" id="sidenavToggle" aria-label="Toggle sidebar">
+    <!-- Left-chevron icon (rotates on collapse) -->
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="15 18 9 12 15 6"/>
+    </svg>
+  </button>
+
+  <div class="sidenav-content">
+
+    <!-- Branding -->
+    <div class="sidenav-logo">Explore the Analysis</div>
+
+    <!-- 
+    Primary navigation
+    <ul class="sidenav-links">
+      <li>
+        <a href="/analysis" {% if active_page == 'analysis' %}class="active"{% endif %}>
+          <svg class="link-icon" width="14" height="14" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+          </svg>
+          <span class="link-label">Analysis</span>
+        </a>
+      </li>
+      <li>
+        <a href="/app" {% if active_page == 'app' %}class="active"{% endif %}>
+          <svg class="link-icon" width="14" height="14" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.93-6.63-.82-8.94 0-2.58.92-5.01 2.86-7.44 6.32"/>
+          </svg>
+          <span class="link-label">App</span>
+        </a>
+      </li>
+    </ul>
+
+    <div class="sidenav-divider"></div> -->
+
+    <!-- Slide jump navigation (only shown on analysis page) -->
+    <div class="sidenav-slides-label">Slides</div>
+    <ul class="slide-nav-list" id="slideNavList">
+      <!-- Slide 0: Home -->
+      <li>
+        <button class="slide-nav-btn active" data-slide="0">
+          <span class="slide-nav-num">0</span>
+          <span class="slide-nav-text">Dataset Overview</span>
+        </button>
+      </li>
+      <!-- Slide 1: Ingredient Network -->
+      <li>
+        <button class="slide-nav-btn" data-slide="1">
+          <span class="slide-nav-num">1</span>
+          <span class="slide-nav-text">Ingredient Network</span>
+        </button>
+      </li>
+      <!-- Slide 2: Nutritional Landscape -->
+      <li>
+        <button class="slide-nav-btn" data-slide="2">
+          <span class="slide-nav-num">2</span>
+          <span class="slide-nav-text">Nutritional Landscape</span>
+        </button>
+      </li>
+      <!-- Slide 3: Cooking Duration -->
+      <li>
+        <button class="slide-nav-btn" data-slide="3">
+          <span class="slide-nav-num">3</span>
+          <span class="slide-nav-text">Cooking Duration</span>
+        </button>
+      </li>
+      <!-- Slide 4: Feature Importance -->
+      <li>
+        <button class="slide-nav-btn" data-slide="4">
+          <span class="slide-nav-num">4</span>
+          <span class="slide-nav-text">Feature Importance</span>
+        </button>
+      </li>
+    </ul>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════
+     MAIN CONTENT
+     ══════════════════════════════════════════════════════ -->
 <main>
   <div class="hero">
-    <h1>The World of <em>Foods</em> - Unveiling the Complex Structure of Recipes</h1>
-    <p class="hero-sub">Click the arrows or use < > keys to explore each visualisation</p>
+    <h1>Unveiling Complex Structures in The World of <em>Recipes</em></h1>
+    <p class="hero-sub">Click the arrows, use &lt; &gt; keys, or jump via the sidebar</p>
   </div>
 
   <div class="carousel-outer">
 
     <button class="arrow-btn left" id="btnLeft" aria-label="Previous">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="15 18 9 12 15 6"/>
       </svg>
     </button>
@@ -39,54 +121,60 @@
       <div class="slides-track" id="track">
 
         <!-- ══════════════════════════════════════
-             SLIDE 0 — HOME
+             SLIDE 0 — HOME / DATASET OVERVIEW
              ══════════════════════════════════════ -->
-        <div class="home-slide">
+        <div class="slide home-slide">
           <div class="home-card">
             <div class="home-toolbar">
               <span class="plot-label">Dataset Overview</span>
             </div>
             <div class="home-body">
-              <div class="home-title"><em>Recipe</em> Ingredient<br>Network Analysis</div>
+              <div class="home-title"><em>Recipe</em> Dataset<br>Exploratory Analysis</div>
               <p class="home-desc">
-                An exploratory analysis of a large-scale recipe dataset, mapping how ingredients
-                co-occur across thousands of dishes. Ingredients are modelled as nodes in a network;
-                edges represent how frequently two ingredients appear together in the same recipe.
-                Community detection, co-occurrence heatmaps, and frequency rankings reveal hidden
-                structure in culinary ingredient space.
+                This project explores a large-scale recipe dataset from multiple perspectives,
+                ranging from ingredient relationships and nutritional composition to cooking
+                complexity and user perception. Rather than following a single rigid narrative,
+                the analysis is intentionally exploratory, with different patterns and insights
+                that may emerge naturally across the data. The focus is on combining unique approach 
+                with visually engaging representations to create an experience that is
+                both informative and enjoyable to navigate. Lastly, it does not serve
+                as an academic report or anything similar, and is instead used simply for the author's learning experience 
+                and the reader's generic knowledge.
               </p>
               <div class="kpi-row">
                 <div class="kpi-card">
-                  <div class="kpi-value">231k</div>
+                  <div class="kpi-value">522k</div>
                   <div class="kpi-label">Total Recipes</div>
                   <div class="kpi-sub">across all categories</div>
                 </div>
                 <div class="kpi-card">
-                  <div class="kpi-value">2,847</div>
-                  <div class="kpi-label">Unique Ingredients</div>
-                  <div class="kpi-sub">after standardisation</div>
+                  <div class="kpi-value">311</div>
+                  <div class="kpi-label">Unique Categories</div>
+                  <div class="kpi-sub"></div>
                 </div>
                 <div class="kpi-card">
-                  <div class="kpi-value">1.2M</div>
-                  <div class="kpi-label">Co-occurrence Pairs</div>
-                  <div class="kpi-sub">min. 5 shared recipes</div>
+                  <div class="kpi-value">1.4M</div>
+                  <div class="kpi-label">Total Reviews</div>
+                  <div class="kpi-sub">across all recipes</div>
                 </div>
                 <div class="kpi-card">
-                  <div class="kpi-value">12.4</div>
-                  <div class="kpi-label">Avg. Ingredients</div>
-                  <div class="kpi-sub">per recipe</div>
+                  <div class="kpi-value">4+</div>
+                  <div class="kpi-label">Avg. Rating</div>
+                  <div class="kpi-sub">across all reviews</div>
                 </div>
                 <div class="kpi-card">
-                  <div class="kpi-value">8</div>
-                  <div class="kpi-label">Communities</div>
-                  <div class="kpi-sub">detected structure</div>
+                  <div class="kpi-value">10+</div>
+                  <div class="kpi-label">Years</div>
+                  <div class="kpi-sub">worth of data</div>
                 </div>
               </div>
+              <p class="home-source-note">Dataset source: <a href="https://www.kaggle.com/datasets/irkaal/foodcom-recipes-and-reviews" target="_blank" rel="noopener noreferrer">Food.com Recipes and Reviews on Kaggle</a></p>
               <div class="home-enter-row">
                 <span class="home-enter-label">Explore the visualisations</span>
                 <button class="home-enter-btn" id="enterBtn">
                   View Charts
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                       stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="9 18 15 12 9 6"/>
                   </svg>
                 </button>
@@ -96,52 +184,57 @@
         </div>
 
         <!-- ══════════════════════════════════════
-             SLIDE 1 — Ingredient Network
+             SLIDE 1 — INGREDIENT NETWORK
              ══════════════════════════════════════ -->
         <div class="slide">
           <div class="plot-card">
             <div class="plot-toolbar">
+              <!-- Toggle between Co-occurrence and Leiden graph -->
               <button class="insight-btn variant-btn" id="toggleleidenBtn" aria-label="Switch graph variant">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="4"/><path d="M2 12h2M20 12h2M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M17.66 6.34l-1.41 1.41M6.34 17.66l-1.41 1.41"/>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="4"/>
+                  <path d="M2 12h2M20 12h2M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M17.66 6.34l-1.41 1.41M6.34 17.66l-1.41 1.41"/>
                 </svg>
                 <span id="leidenBtnLabel">Co-occurrence</span>
               </button>
-              <span class="plot-label" id="networkPlotLabel">Top 100 Ingredient Co-occurrence Network</span>
-                <button class="insight-btn" id="insightBtn1" data-target="insight1" aria-label="Toggle insight">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-                  </svg>
-                  Insight
-                </button>
-                <button class="insight-btn" id="toggleLabelsBtn" aria-label="Toggle node labels">
-                  Labels Off
-                </button>
+
+              <span class="plot-label" id="networkPlotLabel">Ingredient Co-occurrence Network</span>
+
+              <button class="insight-btn" id="insightBtn1" data-target="insight1" aria-label="Toggle insight">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                Insight
+              </button>
+
+              <button class="insight-btn" id="toggleLabelsBtn" aria-label="Toggle node labels">
+                Labels Off
+              </button>
             </div>
 
             <div class="chart-area" id="chart1"></div>
-              <div class="caption">
-                <span class="caption-label" id="networkCaptionLabel">Fig 01-A</span>
-                <p id="networkCaptionText">{{ network_caption }}</p>
-              </div>
+            <div class="caption">
+              <span class="caption-label" id="networkCaptionLabel">Fig 01-A</span>
+              <p id="networkCaptionText">{{ network_caption }}</p>
+            </div>
 
-            <!-- INSIGHT PANEL -->
+            <!-- INSIGHT PANEL — Co-occurrence -->
             <div class="insight-panel" id="insight1">
               <div class="insight-title">{{ network_insight_title }}</div>
               <div class="insight-subtitle">{{ network_insight_subtitle }}</div>
 
               <div class="insight-section">
                 <div class="insight-section-label">How to read it</div>
-                  <div class="insight-text">
-                    {{ network_insight_read | safe }}
-                  </div>
+                <div class="insight-text">{{ network_insight_read | safe }}</div>
               </div>
 
               <div class="insight-section">
                 <div class="insight-section-label">Key findings</div>
-                  <div class="insight-text">
-                    {{ network_insight_findings | safe }}
-                  </div>
+                <div class="insight-text">{{ network_insight_findings | safe }}</div>
                 <div class="insight-highlights">
                   <div class="insight-hl">
                     <div class="insight-hl-value">{{ network_hl_1_value }}</div>
@@ -159,56 +252,54 @@
               </div>
 
               <div class="insight-section">
-                <div class="insight-section-label">About the log-weighted degree</div>
-                  <div class="insight-text">
-                    {{ network_insight_method | safe }}
-                  </div>
+                <div class="insight-section-label">Clustered co-occurrence heatmap</div>
+                <div class="insight-text">{{ network_insight_heatmap | safe }}</div>
+                <div class="insight-mini-chart insight-heatmap-chart" id="networkHeatmapChart"></div>
               </div>
 
+              <div class="insight-section">
+                <div class="insight-section-label">Top ingredient pairs</div>
+                <div class="insight-text">{{ network_insight_toppair | safe }}</div>
+                <div class="insight-mini-chart insight-pairs-chart" id="networkTopPairsChart"></div>
+              </div>
+
+              <div class="insight-section">
+                <div class="insight-section-label">About the log-weighted degree</div>
+                <div class="insight-text">{{ network_insight_method | safe }}</div>
+              </div>
             </div>
             <!-- /INSIGHT PANEL (co-occurrence) -->
 
-            <!-- INSIGHT PANEL — leiden (insight1b) -->
+            <!-- INSIGHT PANEL — Leiden -->
             <div class="insight-panel" id="insight1b">
               <div class="insight-title">{{ leiden_insight_title }}</div>
               <div class="insight-subtitle">{{ leiden_insight_subtitle }}</div>
 
               <div class="insight-section">
                 <div class="insight-section-label">What is this graph</div>
-                  <div class="insight-text">
-                    {{ leiden_insight_what | safe }}
-                  </div>
+                <div class="insight-text">{{ leiden_insight_what | safe }}</div>
               </div>
 
               <div class="insight-section">
                 <div class="insight-section-label">How to read</div>
-                  <div class="insight-text">
-                    {{ leiden_insight_read | safe }}
-                  </div>
+                <div class="insight-text">{{ leiden_insight_read | safe }}</div>
               </div>
 
               <div class="insight-section">
                 <div class="insight-section-label">Key findings</div>
-                  <div class="insight-text">
-                    {{ leiden_insight_findings | safe }}
-                  </div>
+                <div class="insight-text">{{ leiden_insight_findings | safe }}</div>
                 <div class="insight-mini-chart" id="leidenCommunityChart"></div>
               </div>
 
               <div class="insight-section">
                 <div class="insight-section-label">How we should interpret it</div>
-                  <div class="insight-text">
-                    {{ leiden_insight_interpret | safe }}
-                  </div>
+                <div class="insight-text">{{ leiden_insight_interpret | safe }}</div>
               </div>
 
               <div class="insight-section">
                 <div class="insight-section-label">What is Leiden algorithm</div>
-                  <div class="insight-text">
-                    {{ leiden_insight_method | safe }}
-                  </div>
+                <div class="insight-text">{{ leiden_insight_method | safe }}</div>
               </div>
-
             </div>
             <!-- /INSIGHT PANEL (leiden) -->
 
@@ -216,61 +307,296 @@
         </div>
 
         <!-- ══════════════════════════════════════
-             SLIDE 2 — Nutritional Landscape
+             SLIDE 2 — NUTRITIONAL LANDSCAPE
              ══════════════════════════════════════ -->
         <div class="slide">
           <div class="plot-card">
             <div class="plot-toolbar">
-              <span class="plot-label">The Nutritional Landscape of Recipes</span>
-              <button class="insight-btn" data-target="insight2" aria-label="Toggle insight">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+              <!-- Toggle between PCA scatter and heatmap -->
+              <button class="insight-btn variant-btn" id="toggleNutritionBtn" aria-label="Switch nutrition variant">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="4"/>
+                  <path d="M2 12h2M20 12h2M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M17.66 6.34l-1.41 1.41M6.34 17.66l-1.41 1.41"/>
+                </svg>
+                <span id="nutritionBtnLabel">PCA</span>
+              </button>
+
+              <span class="plot-label" id="nutritionPlotLabel">The Nutritional Landscape of Recipes</span>
+
+              <button class="insight-btn" id="insightBtn2" data-target="insight2" aria-label="Toggle insight">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
                 </svg>
                 Insight
+              </button>
+
+              <button class="insight-btn" id="toggleNutritionLabelsBtn" aria-label="Toggle PCA axis labels">
+                Labels Off
               </button>
             </div>
 
             <div class="chart-area" id="chart2"></div>
             <div class="caption">
-              <span class="caption-label">Fig 02</span>
-              <p>
-                PCA map of recipe nutrition profiles, where each point is a recipe positioned by its
-                overall nutritional composition and colored by nutrition cluster.
-              </p>
+              <span class="caption-label" id="nutritionCaptionLabel">Fig 02-A</span>
+              <p id="nutritionCaptionText">{{ nutrition_caption }}</p>
             </div>
 
+            <!-- INSIGHT PANEL — PCA -->
             <div class="insight-panel" id="insight2">
-              <div class="insight-title">The Nutritional Landscape</div>
-              <div class="insight-subtitle">Dimensionality Reduction · Recipe Nutrition Space</div>
+              <div class="insight-title">{{ nutrition_insight_title }}</div>
+              <div class="insight-subtitle">{{ nutrition_insight_subtitle }}</div>
 
               <div class="insight-section">
-                <div class="insight-section-label">What this shows</div>
-                <p class="insight-text">
-                  Each point represents a recipe. Its position is determined by a PCA projection of
-                  nutritional variables, so recipes with similar overall nutrient composition appear
-                  close together. Colors indicate automatically detected nutrition clusters rather than
-                  manually assigned food categories.
-                </p>
+                <div class="insight-section-label">The context</div>
+                <div class="insight-text">{{ nutrition_insight_what | safe }}</div>
               </div>
 
               <div class="insight-section">
-                <div class="insight-section-label">How to read it</div>
-                <p class="insight-text">
-                  Distances in the plot reflect nutritional similarity: nearby recipes tend to share
-                  similar balances of calories, protein, sugar, sodium, fat, and carbohydrate-related
-                  features. The horizontal and vertical axes are latent nutrition dimensions extracted
-                  from the full feature space.
-                </p>
+                <div class="insight-section-label">Key findings</div>
+                <div class="insight-text">{{ nutrition_insight_findings | safe }}</div>
+              </div>
+
+              <div class="insight-section">
+                <div class="insight-section-label">The loading plot</div>
+                <div class="insight-text">{{ nutrition_insight_loading | safe }}</div>
+              </div>
+
+              <div class="insight-section">
+                <div class="insight-mini-chart insight-nutrition-chart" id="nutritionLoadingsChart"></div>
+              </div>
+
+              <div class="insight-section">
+                <div class="insight-section-label">What can we say</div>
+                <div class="insight-text">{{ nutrition_insight_interpret | safe }}</div>
+              </div>
+
+              <div class="insight-section">
+                <div class="insight-mini-chart insight-nutrition-chart" id="nutritionCategoriesChart"></div>
+              </div>
+
+              <div class="insight-section">
+                <div class="insight-section-label">How did the PCA plot created</div>
+                <div class="insight-text">{{ nutrition_insight_method | safe }}</div>
+              </div>
+            </div>
+            <!-- /INSIGHT PANEL (PCA) -->
+
+            <!-- INSIGHT PANEL — Cluster heatmap -->
+            <div class="insight-panel" id="insight2b">
+              <div class="insight-title">{{ nutheat_insight_title }}</div>
+              <div class="insight-subtitle">{{ nutheat_insight_subtitle }}</div>
+
+              <div class="insight-section">
+                <div class="insight-section-label">What this shows</div>
+                <div class="insight-text">{{ nutheat_insight_what | safe }}</div>
               </div>
 
               <div class="insight-section">
                 <div class="insight-section-label">Why it matters</div>
-                <p class="insight-text">
-                  This moves the analysis beyond ingredient structure alone. While the ingredient network
-                  shows which ingredients appear together, this figure shows how entire recipes organize
-                  themselves in nutrition space, revealing groups of recipes that may look different
-                  categorically but behave similarly nutritionally.
-                </p>
+                <div class="insight-text">{{ nutheat_insight_why | safe }}</div>
+              </div>
+
+              <div class="insight-section">
+                <div class="insight-section-label">How to read</div>
+                <div class="insight-text">{{ nutheat_insight_read | safe }}</div>
+              </div>
+
+              <div class="insight-section">
+                <div class="insight-section-label">Key findings</div>
+                <div class="insight-text">{{ nutheat_insight_findings | safe }}</div>
+                <div class="insight-mini-chart insight-nutrition-chart" id="nutritionClusterCategoriesChart"></div>
+              </div>
+
+              <div class="insight-section">
+                <div class="insight-section-label">How to interpret</div>
+                <div class="insight-text">{{ nutheat_insight_interpret | safe }}</div>
+              </div>
+
+              <div class="insight-section">
+                <div class="insight-section-label">How do PCA and GMM work</div>
+                <div class="insight-text">{{ nutheat_insight_method | safe }}</div>
+              </div>
+            </div>
+            <!-- /INSIGHT PANEL (cluster heatmap) -->
+
+          </div>
+        </div>
+
+        <!-- ══════════════════════════════════════
+             SLIDE 3 — COOKING DURATION WINDROSE
+             ══════════════════════════════════════ -->
+        <div class="slide">
+          <div class="plot-card">
+            <div class="plot-toolbar">
+              <span class="plot-label" id="windrosePlotLabel">The Recipe's Compass of Duration</span>
+
+              <button class="insight-btn" id="insightBtn3" data-target="insight3" aria-label="Toggle insight">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                Insight
+              </button>
+            </div>
+
+            <div class="chart-area" id="chart3Area">
+              <div class="windrose-single-host" id="chart3"></div>
+            </div>
+            <div class="caption">
+              <span class="caption-label" id="windroseCaptionLabel">Fig 03</span>
+              <p id="windroseCaptionText">{{ windrose_caption }}</p>
+            </div>
+
+            <div class="insight-panel" id="insight3">
+              <div class="insight-title">{{ windrose_insight_title }}</div>
+              <div class="insight-subtitle">{{ windrose_insight_subtitle }}</div>
+
+              <div class="insight-section">
+                <div class="insight-section-label">What does it show us</div>
+                <div class="insight-text">{{ windrose_insight_findings | safe }}</div>
+              </div>
+
+              <div class="insight-section">
+                <div class="insight-section-label">How the chart is built</div>
+                <div class="insight-text">{{ windrose_insight_method | safe }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══════════════════════════════════════
+            SLIDE 4 — FEATURE IMPORTANCE
+            ══════════════════════════════════════ -->
+        <div class="slide">
+          <div class="plot-card">
+            <div class="plot-toolbar">
+              <button class="insight-btn variant-btn" id="toggleFeatureBtn" aria-label="Switch feature importance figure">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="4"/>
+                  <path d="M2 12h2M20 12h2M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M17.66 6.34l-1.41 1.41M6.34 17.66l-1.41 1.41"/>
+                </svg>
+                <span id="featureBtnLabel">Ternary</span>
+              </button>
+
+              <span class="plot-label" id="featurePlotLabel">The Anatomy of Ratings</span>
+
+              <button class="insight-btn" id="insightBtn4" data-target="insight4" aria-label="Toggle insight">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                Insight
+              </button>
+
+              <button class="insight-btn" id="toggleFeatureLabelsBtn" aria-label="Toggle ternary feature labels">
+                Labels Off
+              </button>
+            </div>
+
+            <div class="chart-area" id="chart4"></div>
+
+            <div class="caption">
+              <span class="caption-label" id="featureCaptionLabel">Fig 04-A</span>
+              <p id="featureCaptionText">{{ feature_caption }}</p>
+            </div>
+
+            <div class="insight-panel" id="insight4">
+              <div class="insight-title">{{ feature_insight_title }}</div>
+              <div class="insight-subtitle">{{ feature_insight_subtitle }}</div>
+
+              <div class="insight-section">
+                <div class="insight-section-label">Establishing the context</div>
+                <div class="insight-text">{{ feature_insight_context | safe }}</div>
+              </div>
+
+              <div class="insight-section">
+                <div class="insight-section-label">Rating distribution</div>
+                <div class="insight-mini-chart feature-insight-chart" id="featureRatingDistributionChart"></div>
+              </div>
+
+              <div class="insight-section">
+                <div class="insight-section-label">What do we expect initially</div>
+                <div class="insight-text">{{ feature_insight_expect | safe }}</div>
+              </div>
+
+              <div class="insight-section">
+                <div class="insight-section-label">How did we do the analysis</div>
+                <div class="insight-text">{{ feature_insight_method | safe }}</div>
+              </div>
+
+              <div class="insight-section">
+                <div class="insight-section-label">Key findings - Reviewer Group</div>
+                <div class="insight-text">{{ feature_insight_findings_red | safe }}</div>
+              </div>
+
+              <div class="insight-section">
+                <div class="insight-section-label">Key findings - Sentiment Group</div>
+                <div class="insight-text">{{ feature_insight_findings_orange | safe }}</div>
+              </div>
+
+              <div class="insight-section">
+                <div class="insight-section-label">Key findings - Review Context Group</div>
+                <div class="insight-text">{{ feature_insight_findings_blue | safe }}</div>
+              </div>
+              
+              <div class="insight-section">
+                <div class="insight-section-label">Key findings - Recipe Group</div>
+                <div class="insight-text">{{ feature_insight_findings_green | safe }}</div>
+              </div>
+
+              <div class="insight-section">
+                <div class="insight-section-label">Much needed summary</div>
+                <div class="insight-text">{{ feature_insight_summary | safe }}</div>
+                <div class="insight-mini-chart feature-insight-chart feature-insight-chart-wide" id="featureDecompCombinedChart"></div>
+              </div>
+
+              <div class="insight-section">
+                <div class="insight-section-label">But...</div>
+                <div class="insight-text">{{ feature_insight_interpret | safe }}</div>
+                <div class="feature-kpi-row">
+                  <div class="feature-kpi-card">
+                    <div class="feature-kpi-label">Rating model R²</div>
+                    <div class="feature-kpi-value feature-kpi-star">{{ '%.4f'|format(feature_meta.get('model_star', {}).get('r2', 0)) }}</div>
+                  </div>
+                  <div class="feature-kpi-card">
+                    <div class="feature-kpi-label">Sentiment model R²</div>
+                    <div class="feature-kpi-value feature-kpi-sentiment">{{ '%.4f'|format(feature_meta.get('model_sentiment', {}).get('r2', 0)) }}</div>
+                  </div>
+                  <div class="feature-kpi-card">
+                    <div class="feature-kpi-label">Gap model R²</div>
+                    <div class="feature-kpi-value feature-kpi-gap">{{ '%.4f'|format(feature_meta.get('model_gap', {}).get('r2', 0)) }}</div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <div class="insight-panel" id="insight4b">
+              <div class="insight-title">{{ reliable_insight_title }}</div>
+              <div class="insight-subtitle">{{ reliable_insight_subtitle }}</div>
+
+              <div class="insight-section">
+                <div class="insight-section-label">What this figure shows</div>
+                <div class="insight-text">{{ reliable_insight_what | safe }}</div>
+              </div>
+
+              <div class="insight-section">
+                <div class="insight-section-label">Key findings</div>
+                <div class="insight-text">{{ reliable_insight_findings | safe }}</div>
+              </div>
+
+              <div class="insight-section">
+                <div class="insight-section-label">How do we interpret</div>
+                <div class="insight-text">{{ reliable_insight_interpret | safe }}</div>
               </div>
             </div>
           </div>
@@ -280,350 +606,800 @@
     </div><!-- /slide-viewport -->
 
     <button class="arrow-btn right" id="btnRight" aria-label="Next">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="9 18 15 12 9 6"/>
       </svg>
     </button>
 
   </div><!-- /carousel-outer -->
 
-  <div class="counter" id="counterEl"><strong id="cntCur">1</strong> / <span id="cntTotal">4</span></div>
+  <div class="counter" id="counterEl"><strong id="cntCur">0</strong> / <span id="cntTotal">4</span></div>
   <div class="dots" id="dots"></div>
   <footer>© Sayyed A. Rafi · built with Flask &amp; Plotly</footer>
 </main>
 
 <script>
+/* ═══════════════════════════════════════════════════════════════════════
+   SIDEBAR — collapse / expand
+   ═══════════════════════════════════════════════════════════════════════ */
+const sidenav       = document.getElementById('sidenav');
+const sidenavToggle = document.getElementById('sidenavToggle');
 
-  const BLUE  = '#2e88cc';
-  const CORAL = '#e07f6a';
+(function initSidebar() {
+  // Restore previous preference
+  if (localStorage.getItem('navCollapsed') === '1') {
+    sidenav.classList.add('collapsed');
+    document.body.classList.add('nav-collapsed');
+  }
+})();
 
-  const BL = {
-    paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)',
-    margin:{t:24,b:46,l:56,r:56},
-    font:{family:"'DM Sans',sans-serif",color:'#7090a8',size:12},
-    legend:{orientation:'h',x:0.5,xanchor:'center',y:1.06,font:{size:11.5},bgcolor:'rgba(0,0,0,0)'},
-    xaxis:{showgrid:false,zeroline:false,linecolor:'#d8ecf8',tickcolor:'#d8ecf8',tickfont:{size:11}},
-    yaxis:{showgrid:true,gridcolor:'#eaf3fb',zeroline:true,zerolinecolor:'#c5dff4',
-           zerolinewidth:1,tickfont:{size:11},linecolor:'#d8ecf8'},
-    hovermode:'x unified',
-    hoverlabel:{bgcolor:'#fff',bordercolor:'#c5dff4',
-                font:{family:"'DM Sans',sans-serif",size:12,color:'#16283a'}}
+sidenavToggle.addEventListener('click', () => {
+  const collapsed = sidenav.classList.toggle('collapsed');
+  document.body.classList.toggle('nav-collapsed', collapsed);
+  localStorage.setItem('navCollapsed', collapsed ? '1' : '0');
+  // After transition: resize active chart to fill new width
+  setTimeout(() => resizePlot(current), 300);
+});
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PLOTLY CONFIG & SHARED LAYOUT HELPERS
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/** Default Plotly config used across all charts */
+const CFG = {
+  responsive: true,
+  displayModeBar: true,
+  displaylogo: false,
+  scrollZoom: true,
+  modeBarButtonsToRemove: ['select2d', 'lasso2d', 'autoScale2d', 'toggleSpikelines'],
+  toImageButtonOptions: { format: 'png', scale: 2 },
+};
+
+/** Default Plotly config for insight sub-charts (no zoom, simpler bar) */
+const CFG_SUB = {
+  responsive: true,
+  displayModeBar: true,
+  displaylogo: false,
+  scrollZoom: false,
+  modeBarButtonsToRemove: ['select2d', 'lasso2d', 'autoScale2d', 'toggleSpikelines'],
+  toImageButtonOptions: { format: 'png', scale: 2 },
+};
+
+/**
+ * Merge fig.layout with sane autosize / margin defaults.
+ * @param {object} fig - Plotly figure object
+ * @param {object} opts.marginDefaults - override default margin values
+ */
+function patchLayout(fig, opts = {}) {
+  const base = fig.layout?.margin || {};
+  const md   = opts.marginDefaults || { t: 50, b: 20, l: 20, r: 20 };
+  return {
+    ...fig.layout,
+    autosize: true,
+    dragmode: false,
+    margin: {
+      t: Math.max(base.t ?? 0, md.t),
+      b: Math.max(base.b ?? 0, md.b),
+      l: Math.max(base.l ?? 0, md.l),
+      r: Math.max(base.r ?? 0, md.r),
+    },
+    xaxis: { ...(fig.layout.xaxis || {}), fixedrange: false, automargin: true },
+    yaxis: { ...(fig.layout.yaxis || {}), fixedrange: false, automargin: true },
   };
-  const CFG = {
-    responsive:true, displayModeBar:true, displaylogo:false, scrollZoom:true,
-    modeBarButtonsToRemove:['select2d','lasso2d','autoScale2d','toggleSpikelines'],
-    toImageButtonOptions:{format:'png',scale:2}
+}
+
+/** Shared transparent background + font overrides for insight sub-charts */
+function subChartBaseLayout(extra = {}) {
+  return {
+    autosize: true,
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor: 'rgba(0,0,0,0)',
+    font: { family: "'DM Sans', sans-serif", color: '#7090a8', size: 11 },
+    ...extra,
   };
+}
 
-  // ─────────────────────────────────────────
-  //  INSIGHT PANEL TOGGLE
-  // ─────────────────────────────────────────
-  document.querySelectorAll('.insight-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const targetId = btn.dataset.target;
-      const panel    = document.getElementById(targetId);
-      const isOpen   = panel.classList.contains('visible');
+/* ═══════════════════════════════════════════════════════════════════════
+   FIGURE DATA (injected by Flask / Jinja)
+   ═══════════════════════════════════════════════════════════════════════ */
 
-      document.querySelectorAll('.insight-panel').forEach(p => p.classList.remove('visible'));
-      document.querySelectorAll('.insight-btn').forEach(b => b.classList.remove('active'));
+// Main slide figures (heavy — only network fig is loaded on demand)
+const LEIDEN_FIG                         = {{ leiden_fig_json | safe }};
+const NUTRITION_FIG                      = {{ nutrition_fig_json | safe }};
+const NUTRITION_HEATMAP_FIG              = {{ nutrition_heatmap_fig_json | safe }};
+const NUTRITION_LOADINGS_FIG             = {{ nutrition_loadings_fig_json | safe }};
+const NUTRITION_CATEGORIES_FIG           = {{ nutrition_categories_fig_json | safe }};
+const NUTRITION_CLUSTER_CATEGORIES_FIG   = {{ nutrition_cluster_categories_fig_json | safe }};
+const LEIDEN_COMMUNITY_FIG               = {{ leiden_community_fig_json | safe }};
+const NETWORK_HEATMAP_FIG                = {{ network_heatmap_fig_json | safe }};
+const NETWORK_TOP_PAIRS_FIG              = {{ network_top_pairs_fig_json | safe }};
+const WINDROSE_FIG                       = {{ windrose_fig_json | safe }};
+const FEATURE_FIG              = {{ feature_fig_json | safe }};
+const FEATURE_RELIABILITY_FIG  = {{ feature_reliability_fig_json | safe }};
+const FEATURE_RIDGE_FIG        = {{ feature_ridge_fig_json | safe }};
+const FEATURE_GROUPED_FIG      = {{ feature_grouped_fig_json | safe }};
+const FEATURE_RATING_DISTRIBUTION_FIG = {{ feature_rating_distribution_fig_json | safe }};
+const FEATURE_DECOMP_COMBINED_FIG = {{ feature_decomp_combined_fig_json | safe }};
+const FEATURE_META = {{ feature_meta | tojson }};
 
-      if (!isOpen) {
-        panel.classList.add('visible');
-        btn.classList.add('active');
-
-        if (targetId === 'insight1b') {
-          setTimeout(() => {
-            buildLeidenCommunityChart();
-          }, 30);
-        }
-      }
-    });
-  });
-
-  // ─────────────────────────────────────────
-  //  CAROUSEL
-  // ─────────────────────────────────────────
-  const TOTAL = 4;
-  let current = 0;
-  let busy    = false;
-  let networkLabelsOn  = false;
-  let showingleiden   = false;   // false = co-occurrence, true = leiden
-  let leidenBuilt     = false;
-
-  const leiden_FIG    = {{ leiden_fig_json | safe }};
-  const NUTRITION_FIG = {{ nutrition_fig_json | safe }};
-  const leiden_COMMUNITY_FIG = {{ leiden_community_fig_json | safe }};
-  let leidenCommunityBuilt = false;
-
-  // Caption text for each variant
-  const CAPTION_A_LABEL = 'Fig 01-A';
-  const CAPTION_A_TEXT  = {{ network_caption | tojson }};
-  const CAPTION_B_LABEL = 'Fig 01-B';
-  const CAPTION_B_TEXT  = {{ leiden_caption | tojson }};
-
-  // Plot-label text for each variant
-  const LABEL_A = 'Top 100 Ingredient Co-occurrence Network';
-  const LABEL_B = 'Ingredient Community Graph Leiden';
-
-  const track    = document.getElementById('track');
-  const viewport = document.getElementById('viewport');
-  const btnLeft  = document.getElementById('btnLeft');
-  const btnRight = document.getElementById('btnRight');
-  const dotsEl   = document.getElementById('dots');
-  const cntCur   = document.getElementById('cntCur');
-  const cntTotal = document.getElementById('cntTotal');
-  cntTotal.textContent = TOTAL;
-
-  const builtSlides = new Set();
-
-  function resizePlot(idx) {
-    if (idx === 0) return;
-    const el = document.getElementById('chart' + idx);
-    if (el && el._fullLayout) Plotly.Plots.resize(el);
-  }
-
-  function applyNetworkLabelMode() {
-    const el = document.getElementById('chart1');
-    if (!el || !el.data || el.data.length < 2) return;
-
-    const nodeTraceIndex = el.data.length - 1;
-
-    if (networkLabelsOn) {
-      Plotly.restyle(el, {
-        mode: 'markers+text',
-        textposition: 'middle center'
-      }, [nodeTraceIndex]);
-    } else {
-      Plotly.restyle(el, {
-        mode: 'markers'
-      }, [nodeTraceIndex]);
-    }
-
-    const btn = document.getElementById('toggleLabelsBtn');
-    if (btn) {
-      btn.textContent = networkLabelsOn ? 'Labels On' : 'Labels Off';
-    }
-  }
+// Caption / label text for variant-toggle slides
+const CAPTION_NETWORK_A  = { label: 'Fig 01-A', text: {{ network_caption | tojson }}, title: 'Ingredient Co-occurrence Network' };
+const CAPTION_NETWORK_B  = { label: 'Fig 01-B', text: {{ leiden_caption  | tojson }}, title: 'Ingredient Community Graph Leiden' };
+const CAPTION_NUTRI_A    = { label: 'Fig 02-A', text: {{ nutrition_caption | tojson }}, title: 'The Nutritional Landscape of Recipes' };
+const CAPTION_NUTRI_B    = { label: 'Fig 02-B', text: {{ nutheat_caption  | tojson }}, title: 'Nutrition Cluster Profile Heatmap' };
+const CAPTION_FEATURE_A  = { label: 'Fig 04-A', text: {{ feature_caption  | tojson }}, title: 'The Anatomy of Ratings' };
+const CAPTION_FEATURE_B  = { label: 'Fig 04-B', text: {{ reliable_caption  | tojson }}, title: 'Category Reliability' };
 
 
-  function patchLayout(fig) {
-    return {
-      ...fig.layout,
-      autosize: true, dragmode: 'pan',
-      margin: {t:50, b:20, l:20, r:20},
-      xaxis: {...(fig.layout.xaxis||{}), fixedrange:false, automargin:true},
-      yaxis: {...(fig.layout.yaxis||{}), fixedrange:false, automargin:true},
-    };
-  }
+/* ═══════════════════════════════════════════════════════════════════════
+   CAROUSEL STATE
+   ═══════════════════════════════════════════════════════════════════════ */
 
-  function buildNetworkChart() {
-    if (builtSlides.has(1)) return Promise.resolve();
-    const networkFig = {{ network_fig_json | safe }};
-    networkFig.layout = patchLayout(networkFig);
-    return Plotly.newPlot('chart1', networkFig.data, networkFig.layout, CFG)
-      .then(() => {
-        builtSlides.add(1);
-        applyNetworkLabelMode();
-        resizePlot(1);
-      });
-  }
+const TOTAL   = 5;
+let current   = 0;
+let busy      = false;
 
-  function buildChart2() {
-    if (builtSlides.has(2)) return Promise.resolve();
+// Per-slide toggle states
+let showingLeiden          = false;   // Slide 1: false = co-occurrence, true = leiden
+let showingNutritionHeatmap = false;  // Slide 2: false = PCA, true = heatmap
+let networkLabelsOn         = false;
+let nutritionLabelsOn       = false;
+let showingFeatureReliability = false;
+let featureLabelsOn         = false;
 
-    const fig = structuredClone(NUTRITION_FIG);
-    fig.layout = patchLayout(fig);
+// Build-once guards (prevents re-rendering already-built charts)
+const builtSlides = new Set();
+let leidenCommunityBuilt          = false;
+let networkHeatmapBuilt           = false;
+let networkTopPairsBuilt          = false;
+let nutritionLoadingsBuilt        = false;
+let nutritionCategoriesBuilt      = false;
+let nutritionClusterCategoriesBuilt = false;
+let featureRatingDistributionBuilt = false;
+let featureDecompCombinedBuilt = false;
 
-    return Plotly.newPlot('chart2', fig.data, fig.layout, CFG)
-      .then(() => {
-        builtSlides.add(2);
-        resizePlot(2);
-      });
-  }
+/* ═══════════════════════════════════════════════════════════════════════
+   INSIGHT PANEL TOGGLE
+   ═══════════════════════════════════════════════════════════════════════ */
 
-  function swapToleiden() {
-    leiden_FIG.layout = patchLayout(leiden_FIG);
-    return Plotly.react('chart1', leiden_FIG.data, leiden_FIG.layout)
-      .then(() => {
-        leidenBuilt = true;
-        applyNetworkLabelMode();
-        resizePlot(1);
-      });
-  }
+document.querySelectorAll('.insight-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const targetId = btn.dataset.target;
+    if (!targetId) return;                              // variant-toggle buttons have no target
 
-  function buildLeidenCommunityChart() {
-    const el = document.getElementById('leidenCommunityChart');
-    if (!el) return Promise.resolve();
+    const panel  = document.getElementById(targetId);
+    const isOpen = panel.classList.contains('visible');
 
-    if (leidenCommunityBuilt) {
-      Plotly.Plots.resize(el);
-      return Promise.resolve();
-    }
-
-    const fig = structuredClone(leiden_COMMUNITY_FIG);
-    fig.layout = {
-      ...fig.layout,
-      autosize: true
-    };
-
-    return Plotly.newPlot('leidenCommunityChart', fig.data, fig.layout, {
-      responsive: true,
-      displayModeBar: false,
-      scrollZoom: false,
-      displaylogo: false
-    }).then(() => {
-      leidenCommunityBuilt = true;
-      Plotly.Plots.resize(el);
-    });
-  }
-
-  function swapToCooccurrence() {
-    const networkFig = {{ network_fig_json | safe }};
-    networkFig.layout = patchLayout(networkFig);
-    return Plotly.react('chart1', networkFig.data, networkFig.layout)
-      .then(() => {
-        applyNetworkLabelMode();
-        resizePlot(1);
-      });
-  }
-
-  function updateNetworkCaption() {
-    const label = showingleiden ? CAPTION_B_LABEL : CAPTION_A_LABEL;
-    const text  = showingleiden ? CAPTION_B_TEXT  : CAPTION_A_TEXT;
-    const title = showingleiden ? LABEL_B         : LABEL_A;
-    document.getElementById('networkCaptionLabel').textContent = label;
-    document.getElementById('networkCaptionText').textContent  = text;
-    document.getElementById('networkPlotLabel').textContent    = title;
-  }
-
-  function ensureBuilt(idx) {
-    if (idx === 1) return buildNetworkChart();
-    if (idx === 2) return buildChart2();
-    return Promise.resolve();
-  }
-
-  function syncUI() {
-    document.querySelectorAll('.dot-nav').forEach((d,i) => d.classList.toggle('active', i===current));
-    cntCur.textContent = current + 1;
-    btnLeft.disabled  = current === 0;
-    btnRight.disabled = current === TOTAL - 1;
-  }
-
-  function updateHomeUI() {
-    const onHome = current === 0;
-    document.getElementById('counterEl').style.visibility = onHome ? 'hidden' : 'visible';
-    document.getElementById('dots').style.visibility      = onHome ? 'hidden' : 'visible';
-  }
-
-  function goTo(next) {
-    if (busy || next === current || next < 0 || next >= TOTAL) return;
-
-    // Close any open insight panel before sliding
+    // Close all panels first
     document.querySelectorAll('.insight-panel').forEach(p => p.classList.remove('visible'));
-    document.querySelectorAll('.insight-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('[data-target]').forEach(b => b.classList.remove('active'));
 
-    busy = true;
-    ensureBuilt(next).then(() => {
-      const w = viewport.clientWidth;
-      track.classList.add('animating');
-      track.style.transform = `translateX(-${next * w}px)`;
-      track.addEventListener('transitionend', () => {
-        track.classList.remove('animating');
-        current = next;
-        busy    = false;
-        syncUI();
-        updateHomeUI();
-        requestAnimationFrame(() => {
-          if (current === 1) applyNetworkLabelMode();
-          resizePlot(current);
-          setTimeout(() => resizePlot(current), 80);
-          setTimeout(() => resizePlot(current), 220);
-        });
-      }, {once:true});
-    }).catch(err => { console.error(err); busy = false; });
-  }
+    if (!isOpen) {
+      panel.classList.add('visible');
+      btn.classList.add('active');
 
-  // nav dots
-  for (let i = 0; i < TOTAL; i++) {
-    const d = document.createElement('button');
-    d.className = 'dot-nav' + (i===0?' active':'');
-    d.setAttribute('aria-label', 'Go to slide ' + (i+1));
-    d.addEventListener('click', () => goTo(i));
-    dotsEl.appendChild(d);
-  }
-
-  btnLeft.addEventListener('click',  () => goTo(current - 1));
-  btnRight.addEventListener('click', () => goTo(current + 1));
-
-  document.addEventListener('keydown', e => {
-    if (e.key==='ArrowLeft')  goTo(current - 1);
-    if (e.key==='ArrowRight') goTo(current + 1);
+      // Lazy-build insight sub-charts on first open
+      if (targetId === 'insight1')  { setTimeout(() => { buildNetworkHeatmapChart(); buildNetworkTopPairsChart(); }, 30); }
+      if (targetId === 'insight1b') { setTimeout(() => buildLeidenCommunityChart(), 30); }
+      if (targetId === 'insight2')  { setTimeout(() => { buildNutritionLoadingsChart(); buildNutritionCategoriesChart(); }, 30); }
+      if (targetId === 'insight2b') { setTimeout(() => buildNutritionClusterCategoriesChart(), 30); }
+      if (targetId === 'insight4')  { setTimeout(() => { buildFeatureRatingDistributionChart(); buildFeatureDecompCombinedChart(); }, 30); }
+    }
   });
+});
 
-  document.getElementById('toggleLabelsBtn').addEventListener('click', () => {
-    networkLabelsOn = !networkLabelsOn;
+/* ═══════════════════════════════════════════════════════════════════════
+   LABEL TOGGLE HELPERS
+   ═══════════════════════════════════════════════════════════════════════ */
+
+function applyNetworkLabelMode() {
+  const el = document.getElementById('chart1');
+  if (!el?.data || el.data.length < 2) return;
+
+  const nodeIdx = el.data.length - 1;
+  Plotly.restyle(el,
+    networkLabelsOn
+      ? { mode: 'markers+text', textposition: 'middle center' }
+      : { mode: 'markers' },
+    [nodeIdx]
+  );
+
+  document.getElementById('toggleLabelsBtn').textContent =
+    networkLabelsOn ? 'Labels On' : 'Labels Off';
+}
+
+function cacheNutritionAxisTitles() {
+  const el = document.getElementById('chart2');
+  if (!el?._fullLayout) return;
+  el.dataset.pcaXTitle = el._fullLayout.xaxis?.title?.text || '';
+  el.dataset.pcaYTitle = el._fullLayout.yaxis?.title?.text || '';
+}
+
+function applyNutritionLabelMode() {
+  const el  = document.getElementById('chart2');
+  const btn = document.getElementById('toggleNutritionLabelsBtn');
+  if (!el?._fullLayout || !btn) return;
+
+  if (showingNutritionHeatmap) {
+    btn.textContent = 'Labels Off';
+    btn.disabled = true;
+    btn.style.opacity = '0.45';
+    btn.style.pointerEvents = 'none';
+    return;
+  }
+
+  btn.disabled = false;
+  btn.style.opacity = '';
+  btn.style.pointerEvents = '';
+  btn.textContent = nutritionLabelsOn ? 'Labels On' : 'Labels Off';
+
+  Plotly.relayout(el, {
+    'xaxis.showticklabels': nutritionLabelsOn,
+    'yaxis.showticklabels': nutritionLabelsOn,
+    'xaxis.ticks':          nutritionLabelsOn ? 'outside' : '',
+    'yaxis.ticks':          nutritionLabelsOn ? 'outside' : '',
+    'xaxis.title.text':     nutritionLabelsOn ? (el.dataset.pcaXTitle || '') : '',
+    'yaxis.title.text':     nutritionLabelsOn ? (el.dataset.pcaYTitle || '') : '',
+    'xaxis.showline':       nutritionLabelsOn,
+    'yaxis.showline':       nutritionLabelsOn,
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   CAPTION HELPERS
+   ═══════════════════════════════════════════════════════════════════════ */
+
+function setCaption(labelEl, textEl, titleEl, cap) {
+  document.getElementById(labelEl).textContent = cap.label;
+  document.getElementById(textEl).textContent  = cap.text;
+  document.getElementById(titleEl).textContent = cap.title;
+}
+
+function updateNetworkCaption() {
+  setCaption('networkCaptionLabel', 'networkCaptionText', 'networkPlotLabel',
+    showingLeiden ? CAPTION_NETWORK_B : CAPTION_NETWORK_A);
+}
+
+function updateNutritionCaption() {
+  setCaption('nutritionCaptionLabel', 'nutritionCaptionText', 'nutritionPlotLabel',
+    showingNutritionHeatmap ? CAPTION_NUTRI_B : CAPTION_NUTRI_A);
+}
+
+function updateFeatureCaption() {
+  setCaption('featureCaptionLabel', 'featureCaptionText', 'featurePlotLabel',
+    showingFeatureReliability ? CAPTION_FEATURE_B : CAPTION_FEATURE_A);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   CHART BUILDERS — main slides
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/** Build Slide 1: co-occurrence network (built lazily on first visit) */
+function buildNetworkChart() {
+  if (builtSlides.has(1)) return Promise.resolve();
+  const fig = {{ network_fig_json | safe }};
+  fig.layout = patchLayout(fig);
+  return Plotly.newPlot('chart1', fig.data, fig.layout, CFG).then(() => {
+    builtSlides.add(1);
     applyNetworkLabelMode();
+    resizePlot(1);
+  });
+}
+
+/** Build Slide 2: PCA scatter */
+function buildChart2() {
+  if (builtSlides.has(2)) return Promise.resolve();
+  const fig = structuredClone(NUTRITION_FIG);
+  fig.layout = patchLayout(fig, { marginDefaults: { t: 80, b: 50, l: 70, r: 50 } });
+  fig.layout.xaxis = { ...fig.layout.xaxis, showline: false };
+  fig.layout.yaxis = { ...fig.layout.yaxis, showline: false };
+  return Plotly.newPlot('chart2', fig.data, fig.layout, CFG).then(() => {
+    builtSlides.add(2);
+    updateNutritionCaption();
+    cacheNutritionAxisTitles();
+    applyNutritionLabelMode();
+    resizePlot(2);
+  });
+}
+
+/** Build Slide 3: windrose */
+function buildChart3() {
+  if (builtSlides.has(3)) return Promise.resolve();
+  const fig = normaliseWindroseFigure(structuredClone(WINDROSE_FIG));
+  return Plotly.newPlot('chart3', fig.data, fig.layout, CFG).then(() => {
+    builtSlides.add(3);
+    resizeWindrosePlot();
+  });
+}
+
+/** Build Slide 4: ternary */
+function buildChart4() {
+  if (builtSlides.has(4)) return Promise.resolve();
+
+  const fig = structuredClone(FEATURE_FIG);
+  fig.layout = patchLayout(fig, { marginDefaults: { t: 70, b: 40, l: 40, r: 40 } });
+
+  return Plotly.newPlot('chart4', fig.data, fig.layout, CFG).then(() => {
+    builtSlides.add(4);
+    updateFeatureCaption();
+    applyFeatureLabelMode();
+    resizePlot(4);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   CHART BUILDERS — insight sub-charts (lazy, built once)
+   ═══════════════════════════════════════════════════════════════════════ */
+
+function buildInsightSubChart(containerId, figData, layoutOverride, builtFlag, setBuilt) {
+  const el = document.getElementById(containerId);
+  if (!el) return Promise.resolve();
+  if (builtFlag) { Plotly.Plots.resize(el); return Promise.resolve(); }
+  const fig = structuredClone(figData);
+  fig.layout = { ...fig.layout, ...subChartBaseLayout(), ...layoutOverride };
+  return Plotly.newPlot(containerId, fig.data, fig.layout, CFG_SUB).then(() => {
+    setBuilt(true);
+    Plotly.Plots.resize(el);
+  });
+}
+
+function buildNetworkHeatmapChart() {
+  return buildInsightSubChart(
+    'networkHeatmapChart', NETWORK_HEATMAP_FIG,
+    {
+      height: 560,
+      margin: { l: 18, r: 18, t: 40, b: 18 },
+      coloraxis: { ...(NETWORK_HEATMAP_FIG.layout?.coloraxis || {}), showscale: false },
+      xaxis: { ...NETWORK_HEATMAP_FIG.layout?.xaxis, title: { text: '' }, tickangle: 90, tickfont: { size: 10 }, automargin: true, ticks: '', showgrid: false, zeroline: false },
+      yaxis: { ...NETWORK_HEATMAP_FIG.layout?.yaxis, title: { text: '' }, tickfont: { size: 10 }, automargin: true, ticks: '', showgrid: false, zeroline: false },
+    },
+    networkHeatmapBuilt,
+    v => { networkHeatmapBuilt = v; }
+  );
+}
+
+function buildNetworkTopPairsChart() {
+  return buildInsightSubChart(
+    'networkTopPairsChart', NETWORK_TOP_PAIRS_FIG,
+    {
+      height: 520,
+      margin: { l: 120, r: 24, t: 40, b: 40 },
+      xaxis: { ...NETWORK_TOP_PAIRS_FIG.layout?.xaxis, title: { text: 'Number of recipes containing both ingredients' }, automargin: true, showgrid: true, gridcolor: '#eaf3fb', zeroline: false },
+      yaxis: { ...NETWORK_TOP_PAIRS_FIG.layout?.yaxis, title: { text: '' }, automargin: true, showgrid: false, zeroline: false },
+    },
+    networkTopPairsBuilt,
+    v => { networkTopPairsBuilt = v; }
+  );
+}
+
+function buildLeidenCommunityChart() {
+  return buildInsightSubChart(
+    'leidenCommunityChart', LEIDEN_COMMUNITY_FIG,
+    { autosize: true },
+    leidenCommunityBuilt,
+    v => { leidenCommunityBuilt = v; }
+  );
+}
+
+function buildNutritionLoadingsChart() {
+  return buildInsightSubChart(
+    'nutritionLoadingsChart', NUTRITION_LOADINGS_FIG,
+    { height: 500, margin: { l: 60, r: 24, t: 30, b: 90 } },
+    nutritionLoadingsBuilt,
+    v => { nutritionLoadingsBuilt = v; }
+  );
+}
+
+function buildNutritionCategoriesChart() {
+  return buildInsightSubChart(
+    'nutritionCategoriesChart', NUTRITION_CATEGORIES_FIG,
+    { height: 560, margin: { l: 70, r: 30, t: 90, b: 95 } },
+    nutritionCategoriesBuilt,
+    v => { nutritionCategoriesBuilt = v; }
+  );
+}
+
+function buildNutritionClusterCategoriesChart() {
+  return buildInsightSubChart(
+    'nutritionClusterCategoriesChart', NUTRITION_CLUSTER_CATEGORIES_FIG,
+    { height: 520, margin: { l: 70, r: 30, t: 85, b: 70 } },
+    nutritionClusterCategoriesBuilt,
+    v => { nutritionClusterCategoriesBuilt = v; }
+  );
+}
+
+
+function buildFeatureRatingDistributionChart() {
+  return buildInsightSubChart(
+    'featureRatingDistributionChart', FEATURE_RATING_DISTRIBUTION_FIG,
+    {
+      height: 420,
+      margin: { l: 60, r: 24, t: 28, b: 55 },
+      xaxis: { ...(FEATURE_RATING_DISTRIBUTION_FIG.layout?.xaxis || {}), title: { text: 'Star Rating' }, automargin: true },
+      yaxis: { ...(FEATURE_RATING_DISTRIBUTION_FIG.layout?.yaxis || {}), title: { text: 'Count' }, automargin: true },
+    },
+    featureRatingDistributionBuilt,
+    v => { featureRatingDistributionBuilt = v; }
+  );
+}
+
+function buildFeatureDecompCombinedChart() {
+  return buildInsightSubChart(
+    'featureDecompCombinedChart', FEATURE_DECOMP_COMBINED_FIG,
+    {
+      height: 500,
+      margin: { l: 36, r: 24, t: 42, b: 40 },
+      showlegend: false,
+    },
+    featureDecompCombinedBuilt,
+    v => { featureDecompCombinedBuilt = v; }
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   VARIANT SWAPS
+   ═══════════════════════════════════════════════════════════════════════ */
+
+function swapToLeiden() {
+  const fig = structuredClone(LEIDEN_FIG);
+  fig.layout = patchLayout(fig);
+  return Plotly.react('chart1', fig.data, fig.layout).then(() => {
+    applyNetworkLabelMode();
+    resizePlot(1);
+  });
+}
+
+function swapToCooccurrence() {
+  const fig = {{ network_fig_json | safe }};
+  fig.layout = patchLayout(fig);
+  return Plotly.react('chart1', fig.data, fig.layout).then(() => {
+    applyNetworkLabelMode();
+    resizePlot(1);
+  });
+}
+
+function swapToNutritionPCA() {
+  const fig = structuredClone(NUTRITION_FIG);
+  fig.layout = patchLayout(fig, { marginDefaults: { t: 95, b: 135, l: 70, r: 60 } });
+  return Plotly.react('chart2', fig.data, fig.layout, CFG).then(() => {
+    updateNutritionCaption();
+    cacheNutritionAxisTitles();
+    applyNutritionLabelMode();
+    resizePlot(2);
+  });
+}
+
+function swapToNutritionHeatmap() {
+  const fig = structuredClone(NUTRITION_HEATMAP_FIG);
+  fig.layout = patchLayout(fig, { marginDefaults: { t: 60, b: 120, l: 80, r: 60 } });
+  return Plotly.react('chart2', fig.data, fig.layout, CFG).then(() => {
+    updateNutritionCaption();
+    applyNutritionLabelMode();
+    resizePlot(2);
+  });
+}
+
+function applyFeatureLabelMode() {
+  const el  = document.getElementById('chart4');
+  const btn = document.getElementById('toggleFeatureLabelsBtn');
+  if (!el?.data || !btn) return;
+
+  if (showingFeatureReliability) {
+    btn.textContent = 'Labels Off';
+    btn.disabled = true;
+    btn.style.opacity = '0.45';
+    btn.style.pointerEvents = 'none';
+    return;
+  }
+
+  btn.disabled = false;
+  btn.style.opacity = '';
+  btn.style.pointerEvents = '';
+  btn.textContent = featureLabelsOn ? 'Labels On' : 'Labels Off';
+
+  const ternaryTraceIdx = [];
+  const update = { mode: [], text: [], textposition: [] };
+
+  el.data.forEach((trace, idx) => {
+    if (trace.type !== 'scatterternary') return;
+    ternaryTraceIdx.push(idx);
+    const labels = (trace.customdata || []).map(row => Array.isArray(row) ? row[0] : '');
+    update.mode.push(featureLabelsOn ? 'markers+text' : 'markers');
+    update.text.push(featureLabelsOn ? labels : labels.map(() => ''));
+    update.textposition.push('middle center');
   });
 
-  document.getElementById('toggleleidenBtn').addEventListener('click', () => {
-    const leidenBtn = document.getElementById('toggleleidenBtn');
-    showingleiden = !showingleiden;
+  if (ternaryTraceIdx.length) Plotly.restyle(el, update, ternaryTraceIdx);
+}
 
-    // Update button label and active class
-    document.getElementById('leidenBtnLabel').textContent =
-      showingleiden ? 'Leiden' : 'Co-occurrence';
-    leidenBtn.classList.toggle('active', showingleiden);
+function swapToFeatureTernary() {
+  const fig = structuredClone(FEATURE_FIG);
+  fig.layout = patchLayout(fig, { marginDefaults: { t: 70, b: 40, l: 40, r: 40 } });
+  return Plotly.react('chart4', fig.data, fig.layout, CFG).then(() => {
+    updateFeatureCaption();
+    applyFeatureLabelMode();
+    resizePlot(4);
+  });
+}
 
-    // Reset labels state on swap
-    networkLabelsOn = false;
-    const labelsBtn = document.getElementById('toggleLabelsBtn');
-    if (labelsBtn) labelsBtn.textContent = 'Labels Off';
+function swapToFeatureReliability() {
+  const fig = structuredClone(FEATURE_RELIABILITY_FIG);
+  fig.layout = patchLayout(fig, { marginDefaults: { t: 70, b: 70, l: 70, r: 40 } });
+  return Plotly.react('chart4', fig.data, fig.layout, CFG).then(() => {
+    updateFeatureCaption();
+    applyFeatureLabelMode();
+    resizePlot(4);
+  });
+}
 
-    // Swap chart
-    if (showingleiden) {
-      swapToleiden();
-    } else {
-      swapToCooccurrence();
-    }
+/* ═══════════════════════════════════════════════════════════════════════
+   WINDROSE HELPERS
+   ═══════════════════════════════════════════════════════════════════════ */
 
-    updateNetworkCaption();
+function normaliseWindroseFigure(fig) {
+  fig.layout = {
+    ...fig.layout,
+    width:  fig.layout?.width  || 900,
+    height: fig.layout?.height || 900,
+    margin: { t: 50, b: 50, l: 28, r: 28 },
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor: 'rgba(0,0,0,0)',
+    showlegend: false,
+    font: { ...(fig.layout?.font || {}), family: "'DM Sans', sans-serif", color: '#2f3c46', size: 11 },
+    polar: {
+      ...(fig.layout?.polar || {}),
+      bgcolor: 'rgba(191, 225, 245, 0.15)',
+      angularaxis: { ...(fig.layout?.polar?.angularaxis || {}), tickfont: { size: 9, color: '#000000' }, gridcolor: 'black', linecolor: 'black' },
+      radialaxis:  { ...(fig.layout?.polar?.radialaxis  || {}), tickfont: { size: 9, color: '#000000' }, gridcolor: 'black', linecolor: 'black' },
+    },
+  };
+  return fig;
+}
 
-    // Point the Insight button at the right panel for this variant
-    const insightBtn = document.getElementById('insightBtn1');
-    if (insightBtn) {
-      insightBtn.dataset.target = showingleiden ? 'insight1b' : 'insight1';
-    }
-    // Close any currently open insight panel
-    document.querySelectorAll('.insight-panel').forEach(p => p.classList.remove('visible'));
-    document.querySelectorAll('.insight-btn').forEach(b => b.classList.remove('active'));
+function getWindroseSquareSize() {
+  const area = document.getElementById('chart3Area');
+  if (!area) return 700;
+  const s    = getComputedStyle(area);
+  const padX = parseFloat(s.paddingLeft) + parseFloat(s.paddingRight);
+  const padY = parseFloat(s.paddingTop)  + parseFloat(s.paddingBottom);
+  return Math.max(320, Math.floor(Math.min(area.clientWidth - padX, area.clientHeight - padY)));
+}
+
+function resizeWindrosePlot() {
+  const el = document.getElementById('chart3');
+  if (!el?._fullLayout) return;
+  const size = getWindroseSquareSize();
+  Plotly.relayout(el, { width: size, height: size });
+  Plotly.Plots.resize(el);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   CAROUSEL NAVIGATION
+   ═══════════════════════════════════════════════════════════════════════ */
+
+const track    = document.getElementById('track');
+const viewport = document.getElementById('viewport');
+const btnLeft  = document.getElementById('btnLeft');
+const btnRight = document.getElementById('btnRight');
+const dotsEl   = document.getElementById('dots');
+const cntCur   = document.getElementById('cntCur');
+const cntTotal = document.getElementById('cntTotal');
+cntTotal.textContent = TOTAL;
+
+/** Return a promise that resolves once the target slide's chart is built */
+function ensureBuilt(idx) {
+  if (idx === 1) return buildNetworkChart();
+  if (idx === 2) return buildChart2();
+  if (idx === 3) return buildChart3();
+  if (idx === 4) return buildChart4();
+  return Promise.resolve();
+}
+
+
+/** Resize the active slide's chart */
+function resizePlot(idx) {
+  if (idx === 0) return;
+  if (idx === 3) { resizeWindrosePlot(); return; }
+  const el = document.getElementById('chart' + idx);
+  if (el?._fullLayout) Plotly.Plots.resize(el);
+}
+
+/** Update dots, counter, arrow states, and sidebar slide nav */
+function syncUI() {
+  // Dot nav
+  document.querySelectorAll('.dot-nav').forEach((d, i) => d.classList.toggle('active', i === current));
+  // Sidebar slide nav
+  document.querySelectorAll('.slide-nav-btn').forEach(btn =>
+    btn.classList.toggle('active', +btn.dataset.slide === current));
+  // Counter
+  cntCur.textContent = current;
+  // Arrow buttons
+  btnLeft.disabled  = current === 0;
+  btnRight.disabled = current === TOTAL - 1;
+}
+
+function updateHomeUI() {
+  const onHome = current === 0;
+  document.getElementById('counterEl').style.visibility = onHome ? 'hidden' : 'visible';
+  document.getElementById('dots').style.visibility      = onHome ? 'hidden' : 'visible';
+}
+
+function goTo(next) {
+  if (busy || next === current || next < 0 || next >= TOTAL) return;
+
+  // Close any open insight panel before sliding
+  document.querySelectorAll('.insight-panel').forEach(p => p.classList.remove('visible'));
+  document.querySelectorAll('[data-target]').forEach(b => b.classList.remove('active'));
+
+  busy = true;
+  ensureBuilt(next).then(() => {
+    const w = viewport.clientWidth;
+    track.classList.add('animating');
+    track.style.transform = `translateX(-${next * w}px)`;
+    track.addEventListener('transitionend', () => {
+      track.classList.remove('animating');
+      current = next;
+      busy    = false;
+      syncUI();
+      updateHomeUI();
+      requestAnimationFrame(() => {
+        if (current === 1) applyNetworkLabelMode();
+        resizePlot(current);
+        setTimeout(() => resizePlot(current), 80);
+        setTimeout(() => resizePlot(current), 220);
+      });
+    }, { once: true });
+  }).catch(err => { console.error(err); busy = false; });
+}
+
+/* ── Dot nav ── */
+for (let i = 0; i < TOTAL; i++) {
+  const d = document.createElement('button');
+  d.className = 'dot-nav' + (i === 0 ? ' active' : '');
+  d.setAttribute('aria-label', 'Go to slide ' + (i + 1));
+  d.addEventListener('click', () => goTo(i));
+  dotsEl.appendChild(d);
+}
+
+/* ── Arrow buttons ── */
+btnLeft.addEventListener('click',  () => goTo(current - 1));
+btnRight.addEventListener('click', () => goTo(current + 1));
+
+/* ── Keyboard navigation ── */
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft')  goTo(current - 1);
+  if (e.key === 'ArrowRight') goTo(current + 1);
+});
+
+/* ── Sidebar slide jump ── */
+document.querySelectorAll('.slide-nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => goTo(+btn.dataset.slide));
+});
+
+/* ── Touch / swipe ── */
+let touchX = null;
+viewport.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, { passive: true });
+viewport.addEventListener('touchend',   e => {
+  if (touchX === null) return;
+  const dx = e.changedTouches[0].clientX - touchX;
+  if (Math.abs(dx) > 40) goTo(dx < 0 ? current + 1 : current - 1);
+  touchX = null;
+}, { passive: true });
+
+/* ── Enter button on home slide ── */
+document.getElementById('enterBtn').addEventListener('click', () => goTo(1));
+
+/* ═══════════════════════════════════════════════════════════════════════
+   VARIANT TOGGLE BUTTONS
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Slide 1: Network graph variant */
+document.getElementById('toggleleidenBtn').addEventListener('click', () => {
+  showingLeiden = !showingLeiden;
+  document.getElementById('leidenBtnLabel').textContent = showingLeiden ? 'Leiden' : 'Co-occurrence';
+  document.getElementById('toggleleidenBtn').classList.toggle('active', showingLeiden);
+
+  // Reset label state when swapping variants
+  networkLabelsOn = false;
+  document.getElementById('toggleLabelsBtn').textContent = 'Labels Off';
+
+  showingLeiden ? swapToLeiden() : swapToCooccurrence();
+  updateNetworkCaption();
+
+  // Point insight button to correct panel
+  document.getElementById('insightBtn1').dataset.target = showingLeiden ? 'insight1b' : 'insight1';
+
+  // Close open panels
+  document.querySelectorAll('.insight-panel').forEach(p => p.classList.remove('visible'));
+  document.querySelectorAll('[data-target]').forEach(b => b.classList.remove('active'));
+});
+
+/* Slide 2: Nutrition chart variant */
+document.getElementById('toggleNutritionBtn').addEventListener('click', () => {
+  showingNutritionHeatmap = !showingNutritionHeatmap;
+  document.getElementById('nutritionBtnLabel').textContent = showingNutritionHeatmap ? 'Heatmap' : 'PCA';
+  document.getElementById('toggleNutritionBtn').classList.toggle('active', showingNutritionHeatmap);
+
+  showingNutritionHeatmap ? swapToNutritionHeatmap() : swapToNutritionPCA();
+
+  document.getElementById('insightBtn2').dataset.target = showingNutritionHeatmap ? 'insight2b' : 'insight2';
+
+  document.querySelectorAll('.insight-panel').forEach(p => p.classList.remove('visible'));
+  document.querySelectorAll('[data-target]').forEach(b => b.classList.remove('active'));
+});
+
+/* Label toggles */
+document.getElementById('toggleLabelsBtn').addEventListener('click', () => {
+  networkLabelsOn = !networkLabelsOn;
+  applyNetworkLabelMode();
+});
+
+document.getElementById('toggleNutritionLabelsBtn').addEventListener('click', () => {
+  if (showingNutritionHeatmap) return;
+  nutritionLabelsOn = !nutritionLabelsOn;
+  applyNutritionLabelMode();
+});
+
+document.getElementById('toggleFeatureBtn').addEventListener('click', () => {
+  showingFeatureReliability = !showingFeatureReliability;
+  document.getElementById('featureBtnLabel').textContent = showingFeatureReliability ? 'Reliability' : 'Ternary';
+  document.getElementById('toggleFeatureBtn').classList.toggle('active', showingFeatureReliability);
+
+  featureLabelsOn = false;
+  document.getElementById('toggleFeatureLabelsBtn').textContent = 'Labels Off';
+
+  showingFeatureReliability ? swapToFeatureReliability() : swapToFeatureTernary();
+
+  document.getElementById('insightBtn4').dataset.target = showingFeatureReliability ? 'insight4b' : 'insight4';
+
+  document.querySelectorAll('.insight-panel').forEach(p => p.classList.remove('visible'));
+  document.querySelectorAll('[data-target]').forEach(b => b.classList.remove('active'));
+});
+
+document.getElementById('toggleFeatureLabelsBtn').addEventListener('click', () => {
+  if (showingFeatureReliability) return;
+  featureLabelsOn = !featureLabelsOn;
+  applyFeatureLabelMode();
+});
+
+/* ═══════════════════════════════════════════════════════════════════════
+   WINDOW RESIZE — reflow all visible / built charts
+   ═══════════════════════════════════════════════════════════════════════ */
+
+window.addEventListener('resize', () => {
+  // Re-anchor carousel track
+  track.style.transform = `translateX(-${current * viewport.clientWidth}px)`;
+  resizePlot(current);
+
+  if (current === 2) setTimeout(() => applyNutritionLabelMode(), 40);
+
+  // Resize all built insight sub-charts
+  [
+    ['networkHeatmapChart',           networkHeatmapBuilt],
+    ['networkTopPairsChart',          networkTopPairsBuilt],
+    ['leidenCommunityChart',          leidenCommunityBuilt],
+    ['nutritionLoadingsChart',        nutritionLoadingsBuilt],
+    ['nutritionCategoriesChart',      nutritionCategoriesBuilt],
+    ['nutritionClusterCategoriesChart', nutritionClusterCategoriesBuilt],
+    ['featureRatingDistributionChart', featureRatingDistributionBuilt],
+    ['featureDecompCombinedChart', featureDecompCombinedBuilt],
+  ].forEach(([id, built]) => {
+    if (built) { const el = document.getElementById(id); if (el) Plotly.Plots.resize(el); }
   });
 
-  let touchX = null;
-  viewport.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, {passive:true});
-  viewport.addEventListener('touchend',   e => {
-    if (touchX===null) return;
-    const dx = e.changedTouches[0].clientX - touchX;
-    if (Math.abs(dx) > 40) goTo(dx < 0 ? current+1 : current-1);
-    touchX = null;
-  }, {passive:true});
+  resizeWindrosePlot();
+});
 
-  window.addEventListener('resize', () => {
-    track.style.transform = `translateX(-${current * viewport.clientWidth}px)`;
-    resizePlot(current);
+/* ═══════════════════════════════════════════════════════════════════════
+   INIT
+   ═══════════════════════════════════════════════════════════════════════ */
 
-    const leidenCommunityEl = document.getElementById('leidenCommunityChart');
-    if (leidenCommunityEl && leidenCommunityBuilt) {
-      Plotly.Plots.resize(leidenCommunityEl);
-    }
-  });
+// Pre-build slide 2 in the background (it uses heavy PCA data already loaded)
+buildChart2();
 
-  document.getElementById('enterBtn').addEventListener('click', () => goTo(1));
-
-  // pre-build non-network charts
-  buildChart2();
-
-  syncUI();
-  updateHomeUI();
+syncUI();
+updateHomeUI();
 </script>
 </body>
 </html>
