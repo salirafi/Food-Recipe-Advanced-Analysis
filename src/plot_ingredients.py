@@ -1,39 +1,20 @@
 #!/usr/bin/env python3
 """
-Standalone script to build an ingredient co-occurrence network,
-plot it with Plotly, and export lightweight plotting data for a web app.
+Ingredient network plotting and export utilities.
 
-Exports
--------
-- ingredient_network_nodes.parquet
-- ingredient_network_edges.parquet
-- ingredient_network_meta.json
-- ingredient_louvain_nodes.parquet
-- ingredient_louvain_edges.parquet
-- ingredient_louvain_communities.parquet
-- ingredient_louvain_meta.json
-- ingredient_leiden_nodes.parquet
-- ingredient_leiden_edges.parquet
-- ingredient_leiden_communities.parquet
-- ingredient_leiden_meta.json
+This module builds:
+- the original ingredient co-occurrence network
+- the Leiden community network
+- ingredient co-occurrence heatmaps
 
-Optional
---------
-- network_preview.html
-- ingredient_network.png
-- ingredient_louvain_graph.html
-- ingredient_louvain_graph.png
-- ingredient_leiden_graph.html
-- ingredient_leiden_graph.png
-
-Requirements
-------------
-pip install pandas numpy networkx plotly pyarrow kaleido scipy igraph leidenalg
+It supports:
+- full-graph computation for analysis
+- display-only edge thinning for web visualization
+- lightweight export + replot helpers
 """
 
 from __future__ import annotations
 
-import argparse
 import ast
 import itertools
 import json
@@ -56,7 +37,10 @@ except ImportError:
     ig = None
     la = None
 
-from src.ingredient_standardization import standardize_ingredient
+try:
+    from .ingredient_standardization import standardize_ingredient
+except ImportError:
+    from ingredient_standardization import standardize_ingredient
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 
@@ -94,7 +78,6 @@ def parse_ingredient_cell(value):
 
     return []
 
-
 def normalize_ingredient(text: str) -> Optional[str]:
     """
     Normalize ingredient strings for graph construction.
@@ -119,7 +102,6 @@ def normalize_ingredient(text: str) -> Optional[str]:
 
     return s
 
-
 def preprocess_ingredient_lists(
     df: pd.DataFrame,
     ingredients_col: str = "RecipeIngredientParts",
@@ -142,7 +124,6 @@ def preprocess_ingredient_lists(
     df[ingredients_col] = df[ingredients_col].apply(clean_list)
     return df
 
-
 def load_recipes_from_sqlite(
     db_path: str | Path,
     table_name: str = "recipes",
@@ -164,7 +145,6 @@ def load_recipes_from_sqlite(
 
     return preprocess_ingredient_lists(df, ingredients_col=ingredients_col)
 
-
 def load_recipes_from_parquet(
     parquet_path: str | Path,
     recipe_col: str = "Name",
@@ -176,7 +156,6 @@ def load_recipes_from_parquet(
     parquet_path = Path(parquet_path)
     df = pd.read_parquet(parquet_path, columns=[recipe_col, ingredients_col])
     return preprocess_ingredient_lists(df, ingredients_col=ingredients_col)
-
 
 def build_discrete_colorscale(n, base_colors="Turbo"):
     """
@@ -196,7 +175,6 @@ def build_discrete_colorscale(n, base_colors="Turbo"):
         colorscale.append(((i + 1) / n, c))
 
     return colorscale
-
 
 # ============================================================
 # Core graph + plotting logic
@@ -246,6 +224,11 @@ GRAPH_DEFAULTS = {
     "layout_seed": 42,
     "layout_k": 1.5,
     "capitalize_labels": True,
+
+    # new: display-only edge thinning
+    "display_edge_k_min": 2,
+    "display_edge_k_max": 12,
+    "display_edge_k_power": 0.5,
 }
 
 
@@ -259,8 +242,8 @@ def _build_filtered_ingredient_graph(
     max_nodes=None,
 ):
     """
-    Shared graph-building pipeline used by the original network,
-    Louvain network, and Leiden network.
+    Shared graph-building pipeline used by the original network
+    and the Leiden network.
     """
     ingredient_freq = Counter()
 
@@ -372,20 +355,106 @@ def _build_filtered_ingredient_graph(
 
     return G, edge_df, node_df, weighted_degree, simple_degree
 
+def _select_display_edges_per_node(
+    edge_df: pd.DataFrame,
+    node_df: pd.DataFrame,
+    k_min: int = 2,
+    k_max: int = 12,
+    k_power: float = 0.5,
+) -> pd.DataFrame:
+    """
+    Select a display-only subset of edges.
+
+    Strategy
+    --------
+    For each node, keep only its top-k strongest edges, where k depends on
+    node scale (here: weighted degree). Larger / more important nodes are
+    allowed to keep more edges.
+
+    Notes
+    -----
+    - This does NOT change the full graph used for analysis/layout/community detection.
+    - It only changes which edges are rendered/exported for the web app.
+    """
+    if edge_df.empty:
+        return edge_df.copy()
+
+    if node_df.empty:
+        return edge_df.copy()
+
+    node_scale = node_df.set_index("ingredient")["weighted_degree"].astype(float)
+
+    scale_vals = np.log1p(node_scale.to_numpy())
+    smin = float(scale_vals.min())
+    smax = float(scale_vals.max())
+
+    if np.isclose(smin, smax):
+        norm_scale = pd.Series(1.0, index=node_scale.index)
+    else:
+        norm_scale = pd.Series(
+            (np.log1p(node_scale) - smin) / (smax - smin),
+            index=node_scale.index,
+        )
+
+    norm_scale = norm_scale.clip(0, 1) ** float(k_power)
+
+    node_k = (
+        k_min + norm_scale * (k_max - k_min)
+    ).round().astype(int).clip(lower=k_min, upper=k_max)
+
+    # long form: each undirected edge appears once from each endpoint
+    left = edge_df[["source", "target", "weight"]].rename(
+        columns={"source": "node", "target": "nbr"}
+    )
+    right = edge_df[["source", "target", "weight"]].rename(
+        columns={"target": "node", "source": "nbr"}
+    )
+    long_df = pd.concat([left, right], ignore_index=True)
+
+    long_df["node_k"] = long_df["node"].map(node_k).fillna(k_min).astype(int)
+
+    long_df = long_df.sort_values(
+        ["node", "weight", "nbr"],
+        ascending=[True, False, True]
+    )
+
+    long_df["rank_within_node"] = long_df.groupby("node").cumcount() + 1
+    long_df = long_df[long_df["rank_within_node"] <= long_df["node_k"]].copy()
+
+    # reconstruct undirected unique edges
+    long_df["a"] = long_df[["node", "nbr"]].min(axis=1)
+    long_df["b"] = long_df[["node", "nbr"]].max(axis=1)
+
+    display_edge_df = (
+        long_df[["a", "b", "weight"]]
+        .drop_duplicates(subset=["a", "b"])
+        .rename(columns={"a": "source", "b": "target"})
+        .sort_values(["weight", "source", "target"], ascending=[False, True, True])
+        .reset_index(drop=True)
+    )
+
+    return display_edge_df
+
 
 def _compute_shared_network_geometry(
     G,
-    edge_df,
+    display_edge_df,
     weighted_degree,
     layout_seed=42,
     layout_k=0.35,
 ):
     """
-    Shared layout + node/edge scaling for all graph types.
+    Shared layout + node/edge scaling.
+
+    Parameters
+    ----------
+    G : full graph used for layout and node statistics
+    display_edge_df : edge table used only for drawing/exporting visible edges
     """
     pos = nx.spring_layout(G, seed=layout_seed, k=layout_k, weight="weight")
 
-    recipe_counts = [G.nodes[n]["recipe_count"] for n in G.nodes()]
+    node_order = list(G.nodes())
+    recipe_counts = [G.nodes[n]["recipe_count"] for n in node_order]
     node_sizes_scaled = scale_log(
         recipe_counts,
         GRAPH_STYLE["node_size_min"],
@@ -393,24 +462,27 @@ def _compute_shared_network_geometry(
         multiplier=1.0,
     )
 
-    edge_weights = edge_df["weight"].to_numpy(dtype=float)
-    edge_widths_scaled = scale_log(
-        edge_weights,
-        GRAPH_STYLE["edge_width_min"],
-        GRAPH_STYLE["edge_width_max"],
-        multiplier=0.5,
-    )
+    if display_edge_df.empty:
+        edge_width_map = {}
+    else:
+        edge_weights = display_edge_df["weight"].to_numpy(dtype=float)
+        edge_widths_scaled = scale_log(
+            edge_weights,
+            GRAPH_STYLE["edge_width_min"],
+            GRAPH_STYLE["edge_width_max"],
+            multiplier=0.5,
+        )
 
-    edge_width_map = {
-        (row["source"], row["target"]): width
-        for (_, row), width in zip(edge_df.iterrows(), edge_widths_scaled)
-    }
-    edge_width_map.update({
-        (row["target"], row["source"]): width
-        for (_, row), width in zip(edge_df.iterrows(), edge_widths_scaled)
-    })
+        edge_width_map = {
+            (row["source"], row["target"]): width
+            for (_, row), width in zip(display_edge_df.iterrows(), edge_widths_scaled)
+        }
+        edge_width_map.update({
+            (row["target"], row["source"]): width
+            for (_, row), width in zip(display_edge_df.iterrows(), edge_widths_scaled)
+        })
 
-    wdeg_values = np.array([weighted_degree[n] for n in G.nodes()], dtype=float)
+    wdeg_values = np.array([weighted_degree[n] for n in node_order], dtype=float)
     wdeg_log = np.log1p(wdeg_values)
 
     if len(wdeg_log) > 1:
@@ -418,25 +490,28 @@ def _compute_shared_network_geometry(
         hi = np.percentile(wdeg_log, 95)
         wdeg_log = np.clip(wdeg_log, lo, hi)
 
-    return pos, node_sizes_scaled, edge_width_map, wdeg_log
+    return pos, node_order, node_sizes_scaled, edge_width_map, wdeg_log
 
 
 def _make_edge_traces(
-    G,
+    display_edge_df,
     pos,
     edge_width_map,
     capitalize_labels=True,
     edge_color_map=None,
 ):
     """
-    Build edge traces with consistent hover and width handling.
+    Build edge traces from display-only edges.
     """
     edge_traces = []
 
-    for u, v, data in G.edges(data=True):
+    for _, row in display_edge_df.iterrows():
+        u = row["source"]
+        v = row["target"]
+        w = row["weight"]
+
         x0, y0 = pos[u]
         x1, y1 = pos[v]
-        w = data["weight"]
 
         u_label = u.title() if capitalize_labels else u
         v_label = v.title() if capitalize_labels else v
@@ -542,7 +617,8 @@ def _detect_leiden_communities(
 
 def _plot_partitioned_ingredient_graph(
     G,
-    edge_df,
+    edge_df_full,
+    edge_df_display,
     weighted_degree,
     simple_degree,
     node_to_community,
@@ -558,25 +634,27 @@ def _plot_partitioned_ingredient_graph(
 ):
     """
     Shared plotting/export logic for partition-based community graphs
-    such as Louvain and Leiden.
+    such as Leiden.
     """
-    pos, node_sizes_scaled, edge_width_map, _ = _compute_shared_network_geometry(
+    pos, node_order, node_sizes_scaled, edge_width_map, _ = _compute_shared_network_geometry(
         G=G,
-        edge_df=edge_df,
+        display_edge_df=edge_df_display,
         weighted_degree=weighted_degree,
         layout_seed=layout_seed,
         layout_k=layout_k,
     )
 
     edge_color_map = {}
-    for u, v in G.edges():
+    for _, row in edge_df_display.iterrows():
+        u = row["source"]
+        v = row["target"]
         same_comm = node_to_community[u] == node_to_community[v]
         color = "rgba(120,120,120,0.30)" if same_comm else "rgba(170,170,170,0.15)"
         edge_color_map[(u, v)] = color
         edge_color_map[(v, u)] = color
 
     edge_traces = _make_edge_traces(
-        G=G,
+        display_edge_df=edge_df_display,
         pos=pos,
         edge_width_map=edge_width_map,
         capitalize_labels=capitalize_labels,
@@ -587,7 +665,7 @@ def _plot_partitioned_ingredient_graph(
     node_text, node_size, node_color, node_label = [], [], [], []
     export_node_rows = []
 
-    for i, node in enumerate(G.nodes()):
+    for i, node in enumerate(node_order):
         x, y = pos[node]
         deg = simple_degree[node]
         wdeg = weighted_degree[node]
@@ -650,7 +728,7 @@ def _plot_partitioned_ingredient_graph(
             colorbar=dict(
                 title="Community",
                 orientation="h",
-                y=-0.15,
+                y=-0.05,
                 x=0.5,
                 xanchor="center",
                 yanchor="top",
@@ -668,11 +746,13 @@ def _plot_partitioned_ingredient_graph(
     )
 
     export_edge_rows = []
-    for u, v, data in G.edges(data=True):
+    for _, row in edge_df_display.iterrows():
+        u = row["source"]
+        v = row["target"]
         export_edge_rows.append({
             "source": u,
             "target": v,
-            "weight": int(data["weight"]),
+            "weight": int(row["weight"]),
             "edge_width": float(edge_width_map[(u, v)]),
             "same_community": bool(node_to_community[u] == node_to_community[v]),
             "edge_color": edge_color_map[(u, v)],
@@ -710,7 +790,10 @@ def _plot_partitioned_ingredient_graph(
         "text_font_size": GRAPH_STYLE["text_font_size"],
         "text_font_family": GRAPH_STYLE["text_font_family"],
         "node_opacity": GRAPH_STYLE["node_opacity"],
-        resolution_key: float(resolution_value),
+        resolution_key: float(resolution_value),\
+        "full_graph_n_nodes": int(G.number_of_nodes()),
+        "full_graph_n_edges": int(edge_df_full.shape[0]),
+        "display_graph_n_edges": int(edge_df_display.shape[0]),
     }
 
     fig = go.Figure(data=edge_traces + [node_trace])
@@ -732,12 +815,15 @@ def plot_ingredient_network(
     title="Ingredient Co-occurrence Network",
     capitalize_labels=GRAPH_DEFAULTS["capitalize_labels"],
     colorscale="Blues",
+    display_edge_k_min=GRAPH_DEFAULTS["display_edge_k_min"],
+    display_edge_k_max=GRAPH_DEFAULTS["display_edge_k_max"],
+    display_edge_k_power=GRAPH_DEFAULTS["display_edge_k_power"],
 ):
     """
     Build and plot the original ingredient co-occurrence network.
     Node color = log(weighted degree).
     """
-    G, edge_df, node_df, weighted_degree, simple_degree = _build_filtered_ingredient_graph(
+    G, edge_df_full, node_df, weighted_degree, simple_degree = _build_filtered_ingredient_graph(
         df=df,
         recipe_col=recipe_col,
         ingredients_col=ingredients_col,
@@ -747,16 +833,24 @@ def plot_ingredient_network(
         max_nodes=max_nodes,
     )
 
-    pos, node_sizes_scaled, edge_width_map, wdeg_log = _compute_shared_network_geometry(
+    edge_df_display = _select_display_edges_per_node(
+        edge_df=edge_df_full,
+        node_df=node_df,
+        k_min=display_edge_k_min,
+        k_max=display_edge_k_max,
+        k_power=display_edge_k_power,
+    )
+
+    pos, node_order, node_sizes_scaled, edge_width_map, wdeg_log = _compute_shared_network_geometry(
         G=G,
-        edge_df=edge_df,
+        display_edge_df=edge_df_display,
         weighted_degree=weighted_degree,
         layout_seed=layout_seed,
         layout_k=layout_k,
     )
 
     edge_traces = _make_edge_traces(
-        G=G,
+        display_edge_df=edge_df_display,
         pos=pos,
         edge_width_map=edge_width_map,
         capitalize_labels=capitalize_labels,
@@ -767,7 +861,7 @@ def plot_ingredient_network(
     node_text, node_size, node_color, node_label = [], [], [], []
     export_node_rows = []
 
-    for i, node in enumerate(G.nodes()):
+    for i, node in enumerate(node_order):
         x, y = pos[node]
         deg = simple_degree[node]
         wdeg = weighted_degree[node]
@@ -824,7 +918,7 @@ def plot_ingredient_network(
             colorbar=dict(
                 title="Log Weighted Degree",
                 orientation="h",
-                y=-0.15,
+                y=-0.05,
                 x=0.5,
                 xanchor="center",
                 yanchor="top",
@@ -842,11 +936,13 @@ def plot_ingredient_network(
     )
 
     export_edge_rows = []
-    for u, v, data in G.edges(data=True):
+    for _, row in edge_df_display.iterrows():
+        u = row["source"]
+        v = row["target"]
         export_edge_rows.append({
             "source": u,
             "target": v,
-            "weight": int(data["weight"]),
+            "weight": int(row["weight"]),
             "edge_width": float(edge_width_map[(u, v)]),
             "edge_color": GRAPH_STYLE["edge_color"],
         })
@@ -873,81 +969,18 @@ def plot_ingredient_network(
         "text_font_size": GRAPH_STYLE["text_font_size"],
         "text_font_family": GRAPH_STYLE["text_font_family"],
         "node_opacity": GRAPH_STYLE["node_opacity"],
+        "full_graph_n_nodes": int(G.number_of_nodes()),
+        "full_graph_n_edges": int(edge_df_full.shape[0]),
+        "display_graph_n_edges": int(edge_df_display.shape[0]),
+        "display_edge_k_min": int(display_edge_k_min),
+        "display_edge_k_max": int(display_edge_k_max),
+        "display_edge_k_power": float(display_edge_k_power),
     }
 
     fig = go.Figure(data=edge_traces + [node_trace])
     fig.update_layout(**_make_graph_layout(title))
 
     return G, fig, export_edge_df, export_node_df, export_meta
-
-
-def plot_ingredient_louvain_graph(
-    df,
-    recipe_col="Name",
-    ingredients_col="RecipeIngredientParts",
-    top_n_ingredients=GRAPH_DEFAULTS["top_n_ingredients"],
-    min_edge_weight=GRAPH_DEFAULTS["min_edge_weight"],
-    min_node_degree=GRAPH_DEFAULTS["min_node_degree"],
-    max_nodes=GRAPH_DEFAULTS["max_nodes"],
-    layout_seed=GRAPH_DEFAULTS["layout_seed"],
-    layout_k=GRAPH_DEFAULTS["layout_k"],
-    title="Ingredient Community Graph (Louvain)",
-    capitalize_labels=GRAPH_DEFAULTS["capitalize_labels"],
-    colorscale="Turbo",
-    louvain_resolution=1.0,
-):
-    """
-    Build and plot the Louvain ingredient network.
-    Node color = community ID.
-    Everything else follows the same shared UI/settings as the original graph.
-    """
-    G, edge_df, node_df, weighted_degree, simple_degree = _build_filtered_ingredient_graph(
-        df=df,
-        recipe_col=recipe_col,
-        ingredients_col=ingredients_col,
-        top_n_ingredients=top_n_ingredients,
-        min_edge_weight=min_edge_weight,
-        min_node_degree=min_node_degree,
-        max_nodes=max_nodes,
-    )
-
-    communities = nx.community.louvain_communities(
-        G,
-        weight="weight",
-        resolution=louvain_resolution,
-        seed=layout_seed,
-    )
-
-    node_to_community = {}
-    for cid, comm in enumerate(communities):
-        for node in comm:
-            node_to_community[node] = cid
-
-    fig, export_edge_df, export_node_df, export_community_df, export_meta = _plot_partitioned_ingredient_graph(
-        G=G,
-        edge_df=edge_df,
-        weighted_degree=weighted_degree,
-        simple_degree=simple_degree,
-        node_to_community=node_to_community,
-        layout_seed=layout_seed,
-        layout_k=layout_k,
-        title=title,
-        capitalize_labels=capitalize_labels,
-        colorscale=colorscale,
-        chart_type="ingredient_louvain_graph",
-        method_name="louvain",
-        resolution_value=louvain_resolution,
-        resolution_key="louvain_resolution",
-    )
-
-    export_meta.update({
-        "top_n_ingredients": None if top_n_ingredients is None else int(top_n_ingredients),
-        "min_edge_weight": int(min_edge_weight),
-        "min_node_degree": int(min_node_degree),
-        "max_nodes": None if max_nodes is None else int(max_nodes),
-    })
-
-    return G, fig, export_edge_df, export_node_df, export_community_df, export_meta
 
 
 def plot_ingredient_leiden_graph(
@@ -964,13 +997,16 @@ def plot_ingredient_leiden_graph(
     capitalize_labels=GRAPH_DEFAULTS["capitalize_labels"],
     colorscale="Turbo",
     leiden_resolution=1.0,
+    display_edge_k_min=GRAPH_DEFAULTS["display_edge_k_min"],
+    display_edge_k_max=GRAPH_DEFAULTS["display_edge_k_max"],
+    display_edge_k_power=GRAPH_DEFAULTS["display_edge_k_power"],
 ):
     """
     Build and plot the Leiden ingredient network.
     Node color = community ID.
     Everything else follows the same shared UI/settings as the original graph.
     """
-    G, edge_df, node_df, weighted_degree, simple_degree = _build_filtered_ingredient_graph(
+    G, edge_df_full, node_df, weighted_degree, simple_degree = _build_filtered_ingredient_graph(
         df=df,
         recipe_col=recipe_col,
         ingredients_col=ingredients_col,
@@ -978,6 +1014,14 @@ def plot_ingredient_leiden_graph(
         min_edge_weight=min_edge_weight,
         min_node_degree=min_node_degree,
         max_nodes=max_nodes,
+    )
+
+    edge_df_display = _select_display_edges_per_node(
+        edge_df=edge_df_full,
+        node_df=node_df,
+        k_min=display_edge_k_min,
+        k_max=display_edge_k_max,
+        k_power=display_edge_k_power,
     )
 
     communities, node_to_community = _detect_leiden_communities(
@@ -988,7 +1032,8 @@ def plot_ingredient_leiden_graph(
 
     fig, export_edge_df, export_node_df, export_community_df, export_meta = _plot_partitioned_ingredient_graph(
         G=G,
-        edge_df=edge_df,
+        edge_df_full=edge_df_full,
+        edge_df_display=edge_df_display,
         weighted_degree=weighted_degree,
         simple_degree=simple_degree,
         node_to_community=node_to_community,
@@ -1008,6 +1053,9 @@ def plot_ingredient_leiden_graph(
         "min_edge_weight": int(min_edge_weight),
         "min_node_degree": int(min_node_degree),
         "max_nodes": None if max_nodes is None else int(max_nodes),
+        "display_edge_k_min": int(display_edge_k_min),
+        "display_edge_k_max": int(display_edge_k_max),
+        "display_edge_k_power": float(display_edge_k_power),
     })
 
     return G, fig, export_edge_df, export_node_df, export_community_df, export_meta
@@ -1015,7 +1063,7 @@ def plot_ingredient_leiden_graph(
 
 def plot_top_ingredient_pairs(
     edge_df: pd.DataFrame,
-    top_n: int = 20,
+    top_n: int = 30,
     title: str = "Top Ingredient Pair Co-occurrences",
     capitalize_labels: bool = True,
 ):
@@ -1276,7 +1324,7 @@ def plot_ingredient_cooccurrence_heatmap(
         co_matrix_display,
         color_continuous_scale=colorscale,
         title=f"Ingredient Co-occurrence Heatmap (Top {top_n}, Log Scale)",
-        aspect="auto",
+        aspect="equal",
     )
 
     fig.update_layout(
@@ -1287,13 +1335,13 @@ def plot_ingredient_cooccurrence_heatmap(
         width=900,
         height=900,
     )
-    fig.update_yaxes(scaleanchor="x", scaleratio=1)
+    # fig.update_yaxes(scaleanchor="x", scaleratio=1)
 
     fig_clustered = px.imshow(
         co_matrix_clustered_display,
         color_continuous_scale=colorscale,
         title="Ingredient Co-occurrence Heatmap (Clustered, Log Scale)",
-        aspect="auto",
+        aspect="equal",
     )
 
     fig_clustered.update_layout(
@@ -1304,7 +1352,7 @@ def plot_ingredient_cooccurrence_heatmap(
         width=900,
         height=900,
     )
-    fig_clustered.update_yaxes(scaleanchor="x", scaleratio=1)
+    # fig_clustered.update_yaxes(scaleanchor="x", scaleratio=1)
 
     export_meta = {
         "chart_type": "ingredient_cooccurrence_heatmap",
@@ -1318,8 +1366,11 @@ def plot_ingredient_cooccurrence_heatmap(
         "height": 900,
         "xaxis_title": "Ingredient",
         "yaxis_title": "Ingredient",
-        "scaleanchor": "x",
-        "scaleratio": 1,
+        # "scaleanchor": "x",
+        # "scaleratio": 1,
+        "showscale": False,
+        "xgap": 0,
+        "ygap": 0,
     }
 
     return fig, fig_clustered, co_matrix_log, co_matrix_log_clustered, export_meta
@@ -1363,7 +1414,7 @@ def export_partition_network_data(
     prefix: str,
 ):
     """
-    Generic export helper for community graphs (Louvain / Leiden).
+    Generic export helper for community graphs.
     """
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -1381,23 +1432,6 @@ def export_partition_network_data(
         json.dump(export_meta, f, indent=2)
 
     return node_path, edge_path, community_path, meta_path
-
-
-def export_louvain_network_data(
-    export_node_df: pd.DataFrame,
-    export_edge_df: pd.DataFrame,
-    export_community_df: pd.DataFrame,
-    export_meta: dict,
-    out_dir: str | Path,
-):
-    return export_partition_network_data(
-        export_node_df=export_node_df,
-        export_edge_df=export_edge_df,
-        export_community_df=export_community_df,
-        export_meta=export_meta,
-        out_dir=out_dir,
-        prefix="ingredient_louvain",
-    )
 
 
 def export_leiden_network_data(
@@ -1476,7 +1510,6 @@ def export_cooccurrence_heatmap_data(
 
     return heatmap_path, clustered_path, meta_path
 
-
 # ============================================================
 # Lightweight replot functions
 # ============================================================
@@ -1546,7 +1579,7 @@ def plot_ingredient_network_from_export(
             colorbar=dict(
                 title=meta["colorbar_title"],
                 orientation="h",
-                y=-0.15,
+                y=-0.05,
                 x=0.5,
                 xanchor="center",
                 yanchor="top",
@@ -1568,14 +1601,13 @@ def plot_ingredient_network_from_export(
 
     return fig
 
-
 def _plot_partition_graph_from_export(
     node_path,
     edge_path,
     meta_path,
 ):
     """
-    Generic replot helper for Louvain / Leiden exported graphs.
+    Generic replot helper for exported community graphs.
     """
     nodes = pd.read_parquet(node_path)
     edges = pd.read_parquet(edge_path)
@@ -1634,7 +1666,7 @@ def _plot_partition_graph_from_export(
             colorbar=dict(
                 title=meta["colorbar_title"],
                 orientation="h",
-                y=-0.15,
+                y=-0.05,
                 x=0.5,
                 xanchor="center",
                 yanchor="top",
@@ -1658,22 +1690,6 @@ def _plot_partition_graph_from_export(
     fig.update_layout(**_make_graph_layout(meta["title"]))
 
     return fig
-
-
-def plot_ingredient_louvain_graph_from_export(
-    node_path=BASE_DIR / "plots/ingredient_network_export/ingredient_louvain_nodes.parquet",
-    edge_path=BASE_DIR / "plots/ingredient_network_export/ingredient_louvain_edges.parquet",
-    meta_path=BASE_DIR / "plots/ingredient_network_export/ingredient_louvain_meta.json",
-):
-    """
-    Replot Louvain community graph using exported lightweight files.
-    """
-    return _plot_partition_graph_from_export(
-        node_path=node_path,
-        edge_path=edge_path,
-        meta_path=meta_path,
-    )
-
 
 def plot_ingredient_leiden_graph_from_export(
     node_path=BASE_DIR / "plots/ingredient_network_export/ingredient_leiden_nodes.parquet",
@@ -1765,7 +1781,6 @@ def plot_leiden_community_size_bar_from_export(
 
     return fig
 
-
 def plot_top_ingredient_pairs_from_export(
     pair_path=BASE_DIR / "plots/ingredient_network_export/top_ingredient_pairs.parquet",
     meta_path=BASE_DIR / "plots/ingredient_network_export/top_ingredient_pairs_meta.json",
@@ -1800,7 +1815,6 @@ def plot_top_ingredient_pairs_from_export(
     )
 
     return fig
-
 
 def plot_top_ingredient_frequencies_from_export(
     freq_path=BASE_DIR / "plots/ingredient_network_export/top_ingredient_frequencies.parquet",
@@ -1838,11 +1852,13 @@ def plot_top_ingredient_frequencies_from_export(
 
     return fig
 
-
 def plot_ingredient_cooccurrence_heatmap_from_export(
     heatmap_path=BASE_DIR / "plots/ingredient_network_export/ingredient_cooccurrence_heatmap.parquet",
     meta_path=BASE_DIR / "plots/ingredient_network_export/ingredient_cooccurrence_heatmap_meta.json",
 ):
+    """
+    Replot the non-clustered co-occurrence heatmap from exported files.
+    """
     matrix = pd.read_parquet(heatmap_path)
 
     with open(meta_path, "r", encoding="utf-8") as f:
@@ -1852,7 +1868,7 @@ def plot_ingredient_cooccurrence_heatmap_from_export(
         matrix,
         color_continuous_scale=meta["colorscale"],
         title=meta["title"],
-        aspect="auto",
+        aspect="equal",
     )
 
     fig.update_layout(
@@ -1863,15 +1879,26 @@ def plot_ingredient_cooccurrence_heatmap_from_export(
         xaxis_title=meta["xaxis_title"],
         yaxis_title=meta["yaxis_title"],
     )
-    fig.update_yaxes(scaleanchor=meta["scaleanchor"], scaleratio=meta["scaleratio"])
+    # fig.update_yaxes(
+    #     scaleanchor=meta["scaleanchor"],
+    #     scaleratio=meta["scaleratio"],
+    # )
+    fig.update_traces(
+        showscale=meta.get("showscale", False),
+        xgap=meta.get("xgap", 0),
+        ygap=meta.get("ygap", 0),
+    )
+    fig.update_coloraxes(showscale=meta.get("showscale", False))
 
     return fig
-
 
 def plot_ingredient_cooccurrence_heatmap_clustered_from_export(
     heatmap_path=BASE_DIR / "plots/ingredient_network_export/ingredient_cooccurrence_heatmap_clustered.parquet",
     meta_path=BASE_DIR / "plots/ingredient_network_export/ingredient_cooccurrence_heatmap_meta.json",
 ):
+    """
+    Replot the clustered co-occurrence heatmap from exported files.
+    """
     matrix = pd.read_parquet(heatmap_path)
 
     with open(meta_path, "r", encoding="utf-8") as f:
@@ -1881,7 +1908,7 @@ def plot_ingredient_cooccurrence_heatmap_clustered_from_export(
         matrix,
         color_continuous_scale=meta["colorscale"],
         title=meta["clustered_title"],
-        aspect="auto",
+        aspect="equal",
     )
 
     fig.update_layout(
@@ -1892,170 +1919,130 @@ def plot_ingredient_cooccurrence_heatmap_clustered_from_export(
         xaxis_title=meta["xaxis_title"],
         yaxis_title=meta["yaxis_title"],
     )
-    fig.update_yaxes(scaleanchor=meta["scaleanchor"], scaleratio=meta["scaleratio"])
+    # fig.update_yaxes(
+    #     scaleanchor=meta["scaleanchor"],
+    #     scaleratio=meta["scaleratio"],
+    # )
+    fig.update_traces(
+        showscale=meta.get("showscale", False),
+        xgap=meta.get("xgap", 0),
+        ygap=meta.get("ygap", 0),
+    )
+    fig.update_coloraxes(showscale=meta.get("showscale", False))
 
     return fig
 
 
 # ============================================================
-# CLI
+# Python-side configuration
 # ============================================================
 
-def build_parser():
-    parser = argparse.ArgumentParser(
-        description="Build ingredient co-occurrence network and export lightweight plotting data."
-    )
+RUN_CONFIG = {
+    "db_path": BASE_DIR / "data" / "tables" / "food_recipe.db",
+    "table_name": "recipes",
+    "recipe_col": "Name",
+    "ingredients_col": "RecipeIngredientParts",
+    "where": None,
+    "out_dir": BASE_DIR / "plots" / "ingredient_network_export",
 
-    parser.add_argument(
-        "--db-path",
-        type=str,
-        default=str(Path(__file__).resolve().parent / "data/tables/food_recipe.db"),
-        help="Path to SQLite database."
-    )
-    parser.add_argument(
-        "--table-name",
-        type=str,
-        default="recipes",
-        help="SQLite table name."
-    )
-    parser.add_argument("--recipe-col", type=str, default="Name", help="Recipe title column name.")
-    parser.add_argument(
-        "--ingredients-col",
-        type=str,
-        default="RecipeIngredientParts",
-        help="Ingredient list column name."
-    )
-    parser.add_argument("--where", type=str, default=None, help="Optional SQL WHERE clause.")
+    "capitalize_labels": True,
 
-    parser.add_argument("--top-n-ingredients", type=int, default=GRAPH_DEFAULTS["top_n_ingredients"])
-    parser.add_argument("--louvain-top-n-ingredients", type=int, default=GRAPH_DEFAULTS["top_n_ingredients"])
-    parser.add_argument("--leiden-top-n-ingredients", type=int, default=GRAPH_DEFAULTS["top_n_ingredients"])
-    parser.add_argument("--top-pairs-n", type=int, default=50)
-    parser.add_argument("--top-frequencies-n", type=int, default=GRAPH_DEFAULTS["top_n_ingredients"])
-    parser.add_argument("--heatmap-top-n", type=int, default=30)
+    "network": {
+        "top_n_ingredients": GRAPH_DEFAULTS["top_n_ingredients"],
+        "min_edge_weight": GRAPH_DEFAULTS["min_edge_weight"],
+        "min_node_degree": GRAPH_DEFAULTS["min_node_degree"],
+        "max_nodes": GRAPH_DEFAULTS["max_nodes"],
+        "layout_seed": GRAPH_DEFAULTS["layout_seed"],
+        "layout_k": GRAPH_DEFAULTS["layout_k"],
+        "title": "Top 100 Most Common Ingredients",
+        "colorscale": "Blues",
+        "display_edge_k_min": GRAPH_DEFAULTS["display_edge_k_min"],
+        "display_edge_k_max": GRAPH_DEFAULTS["display_edge_k_max"],
+        "display_edge_k_power": GRAPH_DEFAULTS["display_edge_k_power"],
+    },
 
-    parser.add_argument("--min-edge-weight", type=int, default=GRAPH_DEFAULTS["min_edge_weight"])
-    parser.add_argument("--min-node-degree", type=int, default=GRAPH_DEFAULTS["min_node_degree"])
-    parser.add_argument("--max-nodes", type=int, default=GRAPH_DEFAULTS["max_nodes"])
-    parser.add_argument("--layout-seed", type=int, default=GRAPH_DEFAULTS["layout_seed"])
-    parser.add_argument("--layout-k", type=float, default=GRAPH_DEFAULTS["layout_k"])
-    parser.add_argument("--title", type=str, default="Network of Top 100 Most Used Ingredients")
+    "leiden": {
+        "enabled": True,
+        "top_n_ingredients": GRAPH_DEFAULTS["top_n_ingredients"],
+        "min_edge_weight": GRAPH_DEFAULTS["min_edge_weight"],
+        "min_node_degree": GRAPH_DEFAULTS["min_node_degree"],
+        "max_nodes": GRAPH_DEFAULTS["max_nodes"],
+        "layout_seed": GRAPH_DEFAULTS["layout_seed"],
+        "layout_k": GRAPH_DEFAULTS["layout_k"],
+        "title": "Ingredient Community Graph (Leiden)",
+        "colorscale": "Turbo",
+        "leiden_resolution": 1.4,
+        "display_edge_k_min": GRAPH_DEFAULTS["display_edge_k_min"],
+        "display_edge_k_max": GRAPH_DEFAULTS["display_edge_k_max"],
+        "display_edge_k_power": GRAPH_DEFAULTS["display_edge_k_power"],
+    },
 
-    parser.add_argument("--louvain-min-edge-weight", type=int, default=GRAPH_DEFAULTS["min_edge_weight"])
-    parser.add_argument("--louvain-min-node-degree", type=int, default=GRAPH_DEFAULTS["min_node_degree"])
-    parser.add_argument("--louvain-max-nodes", type=int, default=GRAPH_DEFAULTS["max_nodes"])
-    parser.add_argument("--louvain-layout-k", type=float, default=GRAPH_DEFAULTS["layout_k"])
-    parser.add_argument("--louvain-resolution", type=float, default=1.2)
+    "heatmap": {
+        "enabled": True,
+        "top_n": 30,
+        "colorscale": "Blues",
+    },
 
-    parser.add_argument("--leiden-min-edge-weight", type=int, default=GRAPH_DEFAULTS["min_edge_weight"])
-    parser.add_argument("--leiden-min-node-degree", type=int, default=GRAPH_DEFAULTS["min_node_degree"])
-    parser.add_argument("--leiden-max-nodes", type=int, default=GRAPH_DEFAULTS["max_nodes"])
-    parser.add_argument("--leiden-layout-k", type=float, default=GRAPH_DEFAULTS["layout_k"])
-    parser.add_argument("--leiden-resolution", type=float, default=1.0)
+    "top_pairs":{
+        "top_n": 50,
+        "title": None,
+    },
 
-    parser.add_argument("--show-louvain", action="store_true", help="Open Louvain community graph in browser.")
-    parser.add_argument("--write-louvain-html", action="store_true", help="Write Louvain community graph HTML preview.")
-    parser.add_argument("--write-louvain-image", action="store_true", help="Write Louvain community graph PNG image.")
+    "write_html": {
+        "network": False,
+        "leiden": False,
+        "heatmap": False,
+        "heatmap_clustered": False,
+    },
 
-    parser.add_argument("--show-leiden", action="store_true", help="Open Leiden community graph in browser.")
-    parser.add_argument("--write-leiden-html", action="store_true", help="Write Leiden community graph HTML preview.")
-    parser.add_argument("--write-leiden-image", action="store_true", help="Write Leiden community graph PNG image.")
+    "write_image": {
+        "network": False,
+        "leiden": False,
+        "heatmap": False,
+        "heatmap_clustered": False,
+    },
 
-    parser.add_argument(
-        "--no-capitalize-labels",
-        action="store_true",
-        help="Do not title-case node labels."
-    )
-
-    parser.add_argument(
-        "--out-dir",
-        type=Path,
-        default=Path(__file__).resolve().parent / "plots" / "ingredient_network_export",
-        help="Output directory for exported files."
-    )
-
-    parser.add_argument("--show-network", action="store_true", help="Open the Plotly figure in a browser.")
-    parser.add_argument("--write-network-html", action="store_true", help="Write network_preview.html to the output directory.")
-    parser.add_argument("--write-network-image", action="store_true", help="Write ingredient_network.png to the output directory.")
-
-    parser.add_argument("--write-pairs-html", action="store_true", help="Write top ingredient pairs HTML preview.")
-    parser.add_argument("--write-pairs-image", action="store_true", help="Write top ingredient pairs PNG image.")
-    parser.add_argument("--show-pairs", action="store_true", help="Open top ingredient pairs plot in browser.")
-
-    parser.add_argument("--write-frequencies-html", action="store_true", help="Write top ingredient frequencies HTML preview.")
-    parser.add_argument("--write-frequencies-image", action="store_true", help="Write top ingredient frequencies PNG image.")
-    parser.add_argument("--show-frequencies", action="store_true", help="Open top ingredient frequencies plot in browser.")
-
-    parser.add_argument("--write-heatmap-html", action="store_true", help="Write heatmap HTML preview.")
-    parser.add_argument("--write-heatmap-image", action="store_true", help="Write heatmap PNG image.")
-    parser.add_argument("--show-heatmap", action="store_true", help="Open heatmap plot in browser.")
-
-    parser.add_argument("--show-heatmap-clustered", action="store_true", help="Open clustered heatmap plot in browser.")
-    parser.add_argument("--write-heatmap-clustered-html", action="store_true", help="Write clustered heatmap HTML preview.")
-    parser.add_argument("--write-heatmap-clustered-image", action="store_true", help="Write clustered heatmap PNG image.")
-
-    return parser
+    "show_figures": {
+        "network": False,
+        "leiden": False,
+        "heatmap": False,
+        "heatmap_clustered": False,
+    },
+}
 
 
-def main():
-    parser = build_parser()
-    args = parser.parse_args()
-
+def main(config: dict = RUN_CONFIG):
     df = load_recipes_from_sqlite(
-        db_path=args.db_path,
-        table_name=args.table_name,
-        recipe_col=args.recipe_col,
-        ingredients_col=args.ingredients_col,
-        where=args.where,
+        db_path=config["db_path"],
+        table_name=config["table_name"],
+        recipe_col=config["recipe_col"],
+        ingredients_col=config["ingredients_col"],
+        where=config["where"],
     )
 
+    out_dir = Path(config["out_dir"])
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    capitalize_labels = bool(config["capitalize_labels"])
+
+    network_cfg = config["network"]
     G, fig, export_edge_df, export_node_df, export_meta = plot_ingredient_network(
         df=df,
-        recipe_col=args.recipe_col,
-        ingredients_col=args.ingredients_col,
-        top_n_ingredients=args.top_n_ingredients,
-        min_edge_weight=args.min_edge_weight,
-        min_node_degree=args.min_node_degree,
-        max_nodes=args.max_nodes,
-        layout_seed=args.layout_seed,
-        layout_k=args.layout_k,
-        title=f"Top {args.top_n_ingredients} Most Common Ingredients",
-        capitalize_labels=not args.no_capitalize_labels,
+        recipe_col=config["recipe_col"],
+        ingredients_col=config["ingredients_col"],
+        top_n_ingredients=network_cfg["top_n_ingredients"],
+        min_edge_weight=network_cfg["min_edge_weight"],
+        min_node_degree=network_cfg["min_node_degree"],
+        max_nodes=network_cfg["max_nodes"],
+        layout_seed=network_cfg["layout_seed"],
+        layout_k=network_cfg["layout_k"],
+        title=network_cfg["title"],
+        capitalize_labels=capitalize_labels,
+        colorscale=network_cfg["colorscale"],
+        display_edge_k_min=network_cfg["display_edge_k_min"],
+        display_edge_k_max=network_cfg["display_edge_k_max"],
+        display_edge_k_power=network_cfg["display_edge_k_power"],
     )
-
-    G_louvain, louvain_fig, louvain_edge_df, louvain_node_df, louvain_community_df, louvain_meta = \
-        plot_ingredient_louvain_graph(
-            df=df,
-            recipe_col=args.recipe_col,
-            ingredients_col=args.ingredients_col,
-            top_n_ingredients=args.louvain_top_n_ingredients,
-            min_edge_weight=args.louvain_min_edge_weight,
-            min_node_degree=args.louvain_min_node_degree,
-            max_nodes=args.louvain_max_nodes,
-            layout_seed=args.layout_seed,
-            layout_k=args.louvain_layout_k,
-            title="Ingredient Community Graph (Louvain)",
-            capitalize_labels=not args.no_capitalize_labels,
-            louvain_resolution=args.louvain_resolution,
-        )
-
-    G_leiden, leiden_fig, leiden_edge_df, leiden_node_df, leiden_community_df, leiden_meta = \
-        plot_ingredient_leiden_graph(
-            df=df,
-            recipe_col=args.recipe_col,
-            ingredients_col=args.ingredients_col,
-            top_n_ingredients=args.leiden_top_n_ingredients,
-            min_edge_weight=args.leiden_min_edge_weight,
-            min_node_degree=args.leiden_min_node_degree,
-            max_nodes=args.leiden_max_nodes,
-            layout_seed=args.layout_seed,
-            layout_k=args.leiden_layout_k,
-            title="Ingredient Community Graph (Leiden)",
-            capitalize_labels=not args.no_capitalize_labels,
-            leiden_resolution=args.leiden_resolution,
-        )
-
-    out_dir = Path(args.out_dir)
 
     node_path, edge_path, meta_path = export_network_data(
         export_node_df=export_node_df,
@@ -2067,25 +2054,78 @@ def main():
     print(f"Exported node data: {node_path}")
     print(f"Exported edge data: {edge_path}")
     print(f"Exported metadata : {meta_path}")
-    print(f"Graph nodes: {G.number_of_nodes()}")
-    print(f"Graph edges: {G.number_of_edges()}")
+    print(f"Full graph nodes  : {G.number_of_nodes()}")
+    print(f"Full graph edges  : {G.number_of_edges()}")
+    print(f"Displayed edges   : {len(export_edge_df)}")
 
-    louvain_node_path, louvain_edge_path, louvain_community_path, louvain_meta_path = \
-        export_louvain_network_data(
-            export_node_df=louvain_node_df,
-            export_edge_df=louvain_edge_df,
-            export_community_df=louvain_community_df,
-            export_meta=louvain_meta,
-            out_dir=out_dir,
+    if config["write_html"]["network"]:
+        html_path = out_dir / "network_preview.html"
+        fig.write_html(html_path)
+        print(f"Wrote HTML preview: {html_path}")
+
+    if config["write_image"]["network"]:
+        image_path = out_dir / "ingredient_network.png"
+        fig.write_image(image_path, width=1700, height=1400, scale=4)
+        print(f"Wrote image: {image_path}")
+
+    if config["show_figures"]["network"]:
+        fig.show()
+
+    full_edge_df_for_pairs = pd.DataFrame([
+        {"source": u, "target": v, "weight": int(data["weight"])}
+        for u, v, data in G.edges(data=True)
+    ])
+    top_pairs_cfg = RUN_CONFIG["top_pairs"]
+    top_pairs_fig, top_pairs_df, top_pairs_meta = plot_top_ingredient_pairs(
+        edge_df=full_edge_df_for_pairs, # using the full edge df
+        top_n=top_pairs_cfg["top_n"],
+        title=top_pairs_cfg["title"], # "Top Ingredient Pair Co-occurrences",
+        capitalize_labels=capitalize_labels,
+    )
+
+    top_pairs_path, top_pairs_meta_path = export_top_pairs_data(
+        export_pair_df=top_pairs_df,
+        export_meta=top_pairs_meta,
+        out_dir=out_dir,
+    )
+
+    print(f"Exported top-pairs data    : {top_pairs_path}")
+    print(f"Exported top-pairs metadata: {top_pairs_meta_path}")
+
+    if config["leiden"]["enabled"]:
+        leiden_cfg = config["leiden"]
+        (
+            G_leiden,
+            leiden_fig,
+            leiden_edge_df,
+            leiden_node_df,
+            leiden_community_df,
+            leiden_meta,
+        ) = plot_ingredient_leiden_graph(
+            df=df,
+            recipe_col=config["recipe_col"],
+            ingredients_col=config["ingredients_col"],
+            top_n_ingredients=leiden_cfg["top_n_ingredients"],
+            min_edge_weight=leiden_cfg["min_edge_weight"],
+            min_node_degree=leiden_cfg["min_node_degree"],
+            max_nodes=leiden_cfg["max_nodes"],
+            layout_seed=leiden_cfg["layout_seed"],
+            layout_k=leiden_cfg["layout_k"],
+            title=leiden_cfg["title"],
+            capitalize_labels=capitalize_labels,
+            colorscale=leiden_cfg["colorscale"],
+            leiden_resolution=leiden_cfg["leiden_resolution"],
+            display_edge_k_min=leiden_cfg["display_edge_k_min"],
+            display_edge_k_max=leiden_cfg["display_edge_k_max"],
+            display_edge_k_power=leiden_cfg["display_edge_k_power"],
         )
 
-    print(f"Exported Louvain node data    : {louvain_node_path}")
-    print(f"Exported Louvain edge data    : {louvain_edge_path}")
-    print(f"Exported Louvain communities  : {louvain_community_path}")
-    print(f"Exported Louvain metadata     : {louvain_meta_path}")
-
-    leiden_node_path, leiden_edge_path, leiden_community_path, leiden_meta_path = \
-        export_leiden_network_data(
+        (
+            leiden_node_path,
+            leiden_edge_path,
+            leiden_community_path,
+            leiden_meta_path,
+        ) = export_leiden_network_data(
             export_node_df=leiden_node_df,
             export_edge_df=leiden_edge_df,
             export_community_df=leiden_community_df,
@@ -2093,49 +2133,79 @@ def main():
             out_dir=out_dir,
         )
 
-    print(f"Exported Leiden node data     : {leiden_node_path}")
-    print(f"Exported Leiden edge data     : {leiden_edge_path}")
-    print(f"Exported Leiden communities   : {leiden_community_path}")
-    print(f"Exported Leiden metadata      : {leiden_meta_path}")
+        print(f"Exported Leiden node data   : {leiden_node_path}")
+        print(f"Exported Leiden edge data   : {leiden_edge_path}")
+        print(f"Exported Leiden communities : {leiden_community_path}")
+        print(f"Exported Leiden metadata    : {leiden_meta_path}")
+        print(f"Leiden full graph nodes     : {G_leiden.number_of_nodes()}")
+        print(f"Leiden full graph edges     : {G_leiden.number_of_edges()}")
+        print(f"Leiden displayed edges      : {len(leiden_edge_df)}")
 
-    if args.write_network_html:
-        html_path = out_dir / "network_preview.html"
-        fig.write_html(html_path)
-        print(f"Wrote HTML preview: {html_path}")
+        if config["write_html"]["leiden"]:
+            leiden_html_path = out_dir / "ingredient_leiden_graph.html"
+            leiden_fig.write_html(leiden_html_path)
+            print(f"Wrote Leiden HTML preview: {leiden_html_path}")
 
-    if args.write_network_image:
-        image_path = out_dir / "ingredient_network.png"
-        fig.write_image(image_path, width=1700, height=1400, scale=4)
-        print(f"Wrote image: {image_path}")
+        if config["write_image"]["leiden"]:
+            leiden_image_path = out_dir / "ingredient_leiden_graph.png"
+            leiden_fig.write_image(leiden_image_path, width=1700, height=1400, scale=4)
+            print(f"Wrote Leiden image: {leiden_image_path}")
 
-    if args.show_network:
-        fig.show()
+        if config["show_figures"]["leiden"]:
+            leiden_fig.show()
 
-    if args.write_louvain_html:
-        louvain_html_path = out_dir / "ingredient_louvain_graph.html"
-        louvain_fig.write_html(louvain_html_path)
-        print(f"Wrote Louvain HTML preview: {louvain_html_path}")
+    if config["heatmap"]["enabled"]:
+        heatmap_cfg = config["heatmap"]
+        (
+            fig_heatmap,
+            fig_heatmap_clustered,
+            co_matrix_log,
+            co_matrix_log_clustered,
+            heatmap_meta,
+        ) = plot_ingredient_cooccurrence_heatmap(
+            df=df,
+            ingredients_col=config["ingredients_col"],
+            top_n=heatmap_cfg["top_n"],
+            colorscale=heatmap_cfg["colorscale"],
+            capitalize_labels=capitalize_labels,
+        )
 
-    if args.write_louvain_image:
-        louvain_image_path = out_dir / "ingredient_louvain_graph.png"
-        louvain_fig.write_image(louvain_image_path, width=1700, height=1400, scale=4)
-        print(f"Wrote Louvain image: {louvain_image_path}")
+        heatmap_path, clustered_heatmap_path, heatmap_meta_path = export_cooccurrence_heatmap_data(
+            co_matrix=co_matrix_log,
+            co_matrix_clustered=co_matrix_log_clustered,
+            export_meta=heatmap_meta,
+            out_dir=out_dir,
+        )
 
-    if args.show_louvain:
-        louvain_fig.show()
+        print(f"Exported heatmap data      : {heatmap_path}")
+        print(f"Exported clustered heatmap : {clustered_heatmap_path}")
+        print(f"Exported heatmap metadata  : {heatmap_meta_path}")
 
-    if args.write_leiden_html:
-        leiden_html_path = out_dir / "ingredient_leiden_graph.html"
-        leiden_fig.write_html(leiden_html_path)
-        print(f"Wrote Leiden HTML preview: {leiden_html_path}")
+        if config["write_html"]["heatmap"]:
+            heatmap_html_path = out_dir / "ingredient_cooccurrence_heatmap.html"
+            fig_heatmap.write_html(heatmap_html_path)
+            print(f"Wrote heatmap HTML preview: {heatmap_html_path}")
 
-    if args.write_leiden_image:
-        leiden_image_path = out_dir / "ingredient_leiden_graph.png"
-        leiden_fig.write_image(leiden_image_path, width=1700, height=1400, scale=4)
-        print(f"Wrote Leiden image: {leiden_image_path}")
+        if config["write_image"]["heatmap"]:
+            heatmap_image_path = out_dir / "ingredient_cooccurrence_heatmap.png"
+            fig_heatmap.write_image(heatmap_image_path, width=1400, height=1400, scale=3)
+            print(f"Wrote heatmap image: {heatmap_image_path}")
 
-    if args.show_leiden:
-        leiden_fig.show()
+        if config["show_figures"]["heatmap"]:
+            fig_heatmap.show()
+
+        if config["write_html"]["heatmap_clustered"]:
+            clustered_heatmap_html_path = out_dir / "ingredient_cooccurrence_heatmap_clustered.html"
+            fig_heatmap_clustered.write_html(clustered_heatmap_html_path)
+            print(f"Wrote clustered heatmap HTML preview: {clustered_heatmap_html_path}")
+
+        if config["write_image"]["heatmap_clustered"]:
+            clustered_heatmap_image_path = out_dir / "ingredient_cooccurrence_heatmap_clustered.png"
+            fig_heatmap_clustered.write_image(clustered_heatmap_image_path, width=1400, height=1400, scale=3)
+            print(f"Wrote clustered heatmap image: {clustered_heatmap_image_path}")
+
+        if config["show_figures"]["heatmap_clustered"]:
+            fig_heatmap_clustered.show()
 
 
 if __name__ == "__main__":
