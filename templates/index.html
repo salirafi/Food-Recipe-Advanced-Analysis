@@ -637,7 +637,7 @@ const sidenavToggle = document.getElementById('sidenavToggle');
 sidenavToggle.addEventListener('click', () => {
   const collapsed = sidenav.classList.toggle('collapsed');
   document.body.classList.toggle('nav-collapsed', collapsed);
-  localStorage.setItem('navCollapsed', collapsed ? '1' : '0');
+  localStorage.setItem('navCollapsed', collapsed ? '0' : '1');
   // After transition: resize active chart to fill new width
   setTimeout(() => resizePlot(current), 300);
 });
