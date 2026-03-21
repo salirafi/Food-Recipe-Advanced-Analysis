@@ -31,16 +31,11 @@ except ImportError:
     la = None
 
 try:
-    from .ingredient_standardization import standardize_ingredient
+    from .ingredient_standardization import standardize_ingredient # python file containing standardize ingredients name
 except ImportError:
     from ingredient_standardization import standardize_ingredient
 
 BASE_DIR = Path(__file__).resolve().parents[1]
-
-
-# ##################
-# Config
-# ##################
 
 GRAPH_STYLE = {
     "height": 1000,
@@ -48,10 +43,10 @@ GRAPH_STYLE = {
     "margin": dict(l=0, r=0, t=0, b=10),
     "plot_bgcolor": "white",
     "paper_bgcolor": "white",
-    "node_size_min": 18,
-    "node_size_max": 55,
-    "edge_width_min": 0.8,
-    "edge_width_max": 5.0,
+    "node_size_min": 18, # minimum node size displayed
+    "node_size_max": 55, # maximum node size displayed
+    "edge_width_min": 0.8, # minimum edge width displayed
+    "edge_width_max": 5.0, # maximum edge widht dsiplayed
     "text_font_size": 10,
     "text_font_family": "Arial Black",
     "text_font_color": "black",
@@ -62,16 +57,16 @@ GRAPH_STYLE = {
 }
 
 GRAPH_DEFAULTS = {
-    "top_n_ingredients": 100,
-    "min_edge_weight": 1,
-    "min_node_degree": 1,
+    "top_n_ingredients": 100, # number of ingredients considered in the graph
+    "min_edge_weight": 1, # display edges more than this
+    "min_node_degree": 1, # display nodes more than this
     "max_nodes": None,
     "layout_seed": 42,
-    "layout_k": 1.5,
+    "layout_k": 1.5, # how separate the nodes are; larger means farther
     "capitalize_labels": True,
-    "display_edge_k_min": 0,
-    "display_edge_k_max": 10,
-    "display_edge_k_power": 0.5,
+    "display_edge_k_min": 0, # number of min. edges displayed per node
+    "display_edge_k_max": 10, # number of max. edges displayed per node
+    "display_edge_k_power": 0.5, # how aggressively we allocate the number of edges shown per node (compensating for larger nodes)
 }
 
 RUN_CONFIG = {
@@ -106,18 +101,18 @@ RUN_CONFIG = {
         "layout_k": GRAPH_DEFAULTS["layout_k"],
         "title": None,
         "colorscale": "Turbo",
-        "leiden_resolution": 1.4,
+        "leiden_resolution": 1.4, # the larger the value the more concentrated the clusters (more clusters)
         "display_edge_k_min": GRAPH_DEFAULTS["display_edge_k_min"],
         "display_edge_k_max": GRAPH_DEFAULTS["display_edge_k_max"],
         "display_edge_k_power": GRAPH_DEFAULTS["display_edge_k_power"],
     },
     "heatmap": {
         "enabled": True,
-        "top_n": 30,
+        "top_n": 30, # number of ingredients displayed in heatmap plot
         "colorscale": "Blues",
     },
     "top_pairs": {
-        "top_n": 50,
+        "top_n": 50, # number of ingredients displayed in top-pair plot
         "title": None,
     },
 }
@@ -140,22 +135,21 @@ WEBAPP_PANELS = {
 
 
 # ##################
-# Shared helpers
+# Helpers
 # ##################
 
-
 def ensure_dir(path: str | Path):
-    Path(path).mkdir(parents=True, exist_ok=True)
-
-
-class _PathAwarePlotlyEncoder(PlotlyJSONEncoder):
-    def default(self, x):
-        if isinstance(x, Path):
-            return str(x)
-        return super().default(x)
-
+    Path(path).mkdir(parents=True, exist_ok=True) # make sure folder exists
 
 def safe_write_json(obj, path: str | Path):
+
+    # below class is to accommodate JSON export containing Path object
+    class _PathAwarePlotlyEncoder(PlotlyJSONEncoder):
+        def default(self, x):
+            if isinstance(x, Path):
+                return str(x) # Path is converted to string
+            return super().default(x)
+        
     with open(path, "w", encoding="utf-8") as f:
         json.dump(obj, f, indent=2, ensure_ascii=False, cls=_PathAwarePlotlyEncoder)
 
@@ -164,12 +158,14 @@ def safe_write_json(obj, path: str | Path):
 # Loading / preprocessing
 # ##################
 
-
 def parse_ingredient_cell(value):
     if isinstance(value, list):
         return value
     if value is None or (isinstance(value, float) and np.isnan(value)):
         return []
+    
+    # handle if value is a single string, not list of strings; e.g. "["val1","val2","val3"]" where it supposed to be ["val1","val2","val3"]
+    # preprocessing.py does not handle this explicitly
     if isinstance(value, str):
         s = value.strip()
         if not s:
@@ -182,8 +178,8 @@ def parse_ingredient_cell(value):
             pass
     return []
 
-
-
+# standardize ingredient 
+# --> similar or synonym names are handled through standardize_ingredient()
 def normalize_ingredient(text: str) -> Optional[str]:
     if not isinstance(text, str):
         return None
@@ -194,8 +190,6 @@ def normalize_ingredient(text: str) -> Optional[str]:
     if s == "unknown":
         return None
     return s
-
-
 
 def preprocess_ingredient_lists(
     df: pd.DataFrame,
@@ -215,8 +209,7 @@ def preprocess_ingredient_lists(
     df[ingredients_col] = df[ingredients_col].apply(clean_list)
     return df
 
-
-
+# query from SQLite
 def load_recipes_from_sqlite(
     db_path: str | Path,
     table_name: str = "recipes",
@@ -237,7 +230,7 @@ def load_recipes_from_sqlite(
 # Graph computation
 # ##################
 
-
+# logarithm scaling for node size and edge width to avoid values too high if we used linear scaling
 def scale_log(values: Iterable[float], out_min: float, out_max: float, multiplier: float = 1.5):
     arr = np.asarray(list(values), dtype=float)
     arr = np.log1p(arr)
@@ -246,9 +239,7 @@ def scale_log(values: Iterable[float], out_min: float, out_max: float, multiplie
     if np.allclose(arr.min(), arr.max()):
         return np.full_like(arr, (out_min + out_max) / 2, dtype=float)
     arr = (arr - arr.min()) / (arr.max() - arr.min())
-    return (out_min + arr * (out_max - out_min)) * multiplier
-
-
+    return (out_min + arr * (out_max - out_min)) * multiplier # min max scaling scaled by a multiplier
 
 def build_discrete_colorscale(n, base_colors="Turbo"):
     if n <= 0:
@@ -263,8 +254,6 @@ def build_discrete_colorscale(n, base_colors="Turbo"):
         colorscale.append(((i + 1) / n, c))
     return colorscale
 
-
-
 def _make_graph_layout(title: str | None) -> dict:
     return dict(
         showlegend=False,
@@ -277,8 +266,6 @@ def _make_graph_layout(title: str | None) -> dict:
         title=title,
     )
 
-
-
 def _build_filtered_ingredient_graph(
     df: pd.DataFrame,
     recipe_col: str = "Name",
@@ -288,56 +275,74 @@ def _build_filtered_ingredient_graph(
     min_node_degree: int = 1,
     max_nodes: int | None = None,
 ):
+    """
+    Build a filtered ingredient co-occurrence graph.
+    """
     ingredient_freq = Counter()
 
     for _, row in df[[recipe_col, ingredients_col]].dropna().iterrows():
         ingredients = row[ingredients_col]
         if not isinstance(ingredients, list):
             continue
+        # count how often each ingredient appears across recipes
+        # and using a set ensures repeated mentions within one recipe only count once.
         ingredients_unique = sorted(set(i for i in ingredients if isinstance(i, str) and i.strip()))
         ingredient_freq.update(ingredients_unique)
 
     allowed_ingredients = None
     if top_n_ingredients is not None:
-        allowed_ingredients = {ingredient for ingredient, _ in ingredient_freq.most_common(top_n_ingredients)}
+        allowed_ingredients = {ingredient for ingredient, _ in ingredient_freq.most_common(top_n_ingredients)} # filter the ingredients
 
     pair_freq = Counter()
     filtered_ingredient_freq = Counter()
 
+    # count ingredient co-occurrence pairs for the filtered group
     for _, row in df[[recipe_col, ingredients_col]].dropna().iterrows():
         ingredients = row[ingredients_col]
         if not isinstance(ingredients, list):
             continue
+
         ingredients_unique = sorted(set(i for i in ingredients if isinstance(i, str) and i.strip()))
+
         if allowed_ingredients is not None:
             ingredients_unique = [i for i in ingredients_unique if i in allowed_ingredients]
+
+        # count how many recipes contain each retained ingredient
         filtered_ingredient_freq.update(ingredients_unique)
+
         for pair in itertools.combinations(ingredients_unique, 2):
             pair_freq[pair] += 1
 
+    # keep only sufficiently common ingredient pairs (set from min_edge_weight)
     edge_rows = [
         {"source": a, "target": b, "weight": w}
         for (a, b), w in pair_freq.items()
         if w >= min_edge_weight
     ]
     edge_df = pd.DataFrame(edge_rows)
+
     if edge_df.empty:
         raise ValueError("No edges remain after filtering. Try lowering min_edge_weight or increasing top_n_ingredients.")
 
+    # building the graph
     G = nx.Graph()
     for _, row in edge_df.iterrows():
         G.add_edge(row["source"], row["target"], weight=row["weight"])
+
+    # attach recipe_count to each node: number of recipes containing that ingredient
     for node in G.nodes():
         G.nodes[node]["recipe_count"] = filtered_ingredient_freq[node]
 
+    # for display, remove nodes with low degree (set from low_degree_nodes)
     low_degree_nodes = [n for n, d in dict(G.degree()).items() if d < min_node_degree]
     G.remove_nodes_from(low_degree_nodes)
-    G.remove_nodes_from(list(nx.isolates(G)))
+    G.remove_nodes_from(list(nx.isolates(G))) # remove isolates that may appear after pruning.
 
     if G.number_of_nodes() == 0:
         raise ValueError("No nodes remain after filtering. Try lowering min_edge_weight/min_node_degree.")
 
     if max_nodes is not None and G.number_of_nodes() > max_nodes:
+        # set the weighted degree; equals to sum of adjacent edge weights
         weighted_degree_tmp = dict(G.degree(weight="weight"))
         top_nodes = sorted(weighted_degree_tmp, key=weighted_degree_tmp.get, reverse=True)[:max_nodes]
         G = G.subgraph(top_nodes).copy()
@@ -347,6 +352,7 @@ def _build_filtered_ingredient_graph(
         for u, v, data in G.edges(data=True)
     ]
     edge_df = pd.DataFrame(edge_rows_filtered)
+
     weighted_degree = dict(G.degree(weight="weight"))
     simple_degree = dict(G.degree())
 
@@ -364,8 +370,9 @@ def _build_filtered_ingredient_graph(
 
     return G, edge_df, node_df, weighted_degree, simple_degree
 
-
-
+# function to select a reduced display subset of edges, with a per-node edge quota
+# NOTE: This function does not change the underlying graph
+# it only decides which edges are shown in the visualization.
 def _select_display_edges_per_node(
     edge_df: pd.DataFrame,
     node_df: pd.DataFrame,
@@ -373,28 +380,39 @@ def _select_display_edges_per_node(
     k_max: int = 12,
     k_power: float = 0.5,
 ) -> pd.DataFrame:
+
     if edge_df.empty or node_df.empty:
         return edge_df.copy()
 
+    # use weighted degree as the importance scale for deciding edge quota
     node_scale = node_df.set_index("ingredient")["weighted_degree"].astype(float)
     scale_vals = np.log1p(node_scale.to_numpy())
     smin = float(scale_vals.min())
     smax = float(scale_vals.max())
 
-    if np.isclose(smin, smax):
+    if np.isclose(smin, smax): # normalizing to [0,1]
         norm_scale = pd.Series(1.0, index=node_scale.index)
     else:
         norm_scale = pd.Series((np.log1p(node_scale) - smin) / (smax - smin), index=node_scale.index)
+
+    # power transform shapes the allocation curve to avoid linear scaling with node sizes
+    # example: k_power < 1 boosts smaller nodes relative to large hubs.
     norm_scale = norm_scale.clip(0, 1) ** float(k_power)
+
     node_k = (k_min + norm_scale * (k_max - k_min)).round().astype(int).clip(lower=k_min, upper=k_max)
 
     left = edge_df[["source", "target", "weight"]].rename(columns={"source": "node", "target": "nbr"})
     right = edge_df[["source", "target", "weight"]].rename(columns={"target": "node", "source": "nbr"})
     long_df = pd.concat([left, right], ignore_index=True)
+
     long_df["node_k"] = long_df["node"].map(node_k).fillna(k_min).astype(int)
+
+    # rank incident edges by descending weight for each node
     long_df = long_df.sort_values(["node", "weight", "nbr"], ascending=[True, False, True])
     long_df["rank_within_node"] = long_df.groupby("node").cumcount() + 1
-    long_df = long_df[long_df["rank_within_node"] <= long_df["node_k"]].copy()
+
+    long_df = long_df[long_df["rank_within_node"] <= long_df["node_k"]].copy() # keeping only the top-k edges for each node
+
     long_df["a"] = long_df[["node", "nbr"]].min(axis=1)
     long_df["b"] = long_df[["node", "nbr"]].max(axis=1)
 
@@ -406,8 +424,6 @@ def _select_display_edges_per_node(
         .reset_index(drop=True)
     )
 
-
-
 def _compute_shared_network_geometry(
     G: nx.Graph,
     display_edge_df: pd.DataFrame,
@@ -415,6 +431,13 @@ def _compute_shared_network_geometry(
     layout_seed: int = 42,
     layout_k: float = 0.35,
 ):
+    """
+    Compute shared geometry and visual scaling used by both network (original and Leiden).
+
+    Returns node positions, node order, scaled node sizes, per-edge display widths,
+    and clipped log-weighted-degree values for node coloring.
+    """
+
     pos = nx.spring_layout(G, seed=layout_seed, k=layout_k, weight="weight")
     node_order = list(G.nodes())
 
@@ -439,16 +462,16 @@ def _compute_shared_network_geometry(
             edge_width_map[(row["target"], row["source"])] = float(width)
 
     wdeg_values = np.array([weighted_degree[n] for n in node_order], dtype=float)
-    wdeg_log = np.log1p(wdeg_values)
-    if len(wdeg_log) > 1:
+    wdeg_log = np.log1p(wdeg_values) # log weighted degree is used for node color in the main graph --> important for interpretation!
+    if len(wdeg_log) > 1: # clip extreme values so a few nodes cannot dominate color range
         lo = np.percentile(wdeg_log, 5)
         hi = np.percentile(wdeg_log, 95)
         wdeg_log = np.clip(wdeg_log, lo, hi)
 
     return pos, node_order, node_sizes_scaled, edge_width_map, wdeg_log
 
-
-
+# convert a NetworkX graph into an igraph graph
+# leiden clustering is performed via igraph + leidenalg, so this conversion is needed before community detection
 def _build_igraph_from_networkx(G: nx.Graph):
     if ig is None or la is None:
         raise ImportError("Leiden dependencies are missing. Install with: pip install igraph leidenalg")
@@ -466,9 +489,25 @@ def _build_igraph_from_networkx(G: nx.Graph):
         g.es["weight"] = weights
     return g
 
-
-
 def _detect_leiden_communities(G: nx.Graph, resolution: float = 1.0, seed: int = 42):
+    """
+    Detect communities in the graph using the Leiden algorithm.
+
+    Parameters:
+        G: nx.Graph
+            Input graph
+        resolution: float
+            Community resolution parameter. Larger values usually produce more,
+            smaller communities
+        seed: int
+            Random seed for reproducibility
+
+    Returns:
+        communities: list[set[str]]
+            List of communities, each represented as a set of node names
+        node_to_community: dict
+            Mapping: node name -> community id
+    """
     g = _build_igraph_from_networkx(G)
     np.random.seed(seed)
     partition = la.find_partition(
@@ -490,10 +529,12 @@ def _detect_leiden_communities(G: nx.Graph, resolution: float = 1.0, seed: int =
 
 
 # ##################
-# Lightweight figure inputs
+# Figure inputs
 # ##################
 
-
+#  build export tables and metadata for the original network graph figure
+# this function prepares lightweight node/edge dataframes plus a metadata dict,
+# which can later be turned into a Plotly figure without recomputing the graph
 def build_ingredient_network_export(
     df: pd.DataFrame,
     recipe_col: str = "Name",
@@ -521,7 +562,7 @@ def build_ingredient_network_export(
         max_nodes=max_nodes,
     )
 
-    edge_df_display = _select_display_edges_per_node(
+    edge_df_display = _select_display_edges_per_node(  # this will output the edges that will be displayed (filtered from the full edges df)
         edge_df=edge_df_full,
         node_df=node_df,
         k_min=display_edge_k_min,
@@ -529,6 +570,7 @@ def build_ingredient_network_export(
         k_power=display_edge_k_power,
     )
 
+    # shared geometry and scaling used to place nodes and style edges or nodes
     pos, node_order, node_sizes_scaled, edge_width_map, wdeg_log = _compute_shared_network_geometry(
         G=G,
         display_edge_df=edge_df_display,
@@ -606,7 +648,7 @@ def build_ingredient_network_export(
         "plot_bgcolor": GRAPH_STYLE["plot_bgcolor"],
         "paper_bgcolor": GRAPH_STYLE["paper_bgcolor"],
         "margin": GRAPH_STYLE["margin"],
-        "full_graph_n_nodes": int(G.number_of_nodes()),
+        "full_graph_n_nodes": int(G.number_of_nodes()),# full_graph_ refers to graph after structural filtering, before edge filtering for display
         "full_graph_n_edges": int(edge_df_full.shape[0]),
         "display_graph_n_edges": int(edge_df_display.shape[0]),
         "display_edge_k_min": int(display_edge_k_min),
@@ -615,8 +657,7 @@ def build_ingredient_network_export(
     }
     return export_node_df, export_edge_df, export_meta
 
-
-
+# same as build_ingredient_network_export() but for Leiden graph (include community color assignment)
 def build_ingredient_leiden_export(
     df: pd.DataFrame,
     recipe_col: str = "Name",
@@ -645,7 +686,7 @@ def build_ingredient_leiden_export(
         max_nodes=max_nodes,
     )
 
-    edge_df_display = _select_display_edges_per_node(
+    edge_df_display = _select_display_edges_per_node( # this will output the edges that will be displayed (filtered from the full edges df)
         edge_df=edge_df_full,
         node_df=node_df,
         k_min=display_edge_k_min,
@@ -661,12 +702,12 @@ def build_ingredient_leiden_export(
         layout_k=layout_k,
     )
 
-    n_communities = len(set(node_to_community.values()))
+    n_communities = len(set(node_to_community.values())) # getting number of communities
     discrete_colorscale = build_discrete_colorscale(n_communities, colorscale)
 
     nodes = []
     for i, node in enumerate(node_order):
-        cid = int(node_to_community[node])
+        cid = int(node_to_community[node]) # assining the community number
         label = node.title() if capitalize_labels else node
         hovertext = (
             f"<b>{label}</b><br>"
@@ -696,7 +737,7 @@ def build_ingredient_leiden_export(
     for _, row in edge_df_display.iterrows():
         u = row["source"]
         v = row["target"]
-        same_comm = bool(node_to_community[u] == node_to_community[v])
+        same_comm = bool(node_to_community[u] == node_to_community[v]) # use lighter edges when they connect different communities
         edge_color = "rgba(120,120,120,0.30)" if same_comm else "rgba(170,170,170,0.15)"
         edges.append(
             {
@@ -715,7 +756,7 @@ def build_ingredient_leiden_export(
         )
     export_edge_df = pd.DataFrame(edges)
 
-    export_community_df = (
+    export_community_df = ( # grouping the rows based on community for applying aggregate functions
         export_node_df.groupby("community")
         .agg(
             n_ingredients=("ingredient", "count"),
@@ -763,8 +804,7 @@ def build_ingredient_leiden_export(
     }
     return export_node_df, export_edge_df, export_community_df, export_meta
 
-
-
+# build an export table for the top co-occurring ingredient pairs
 def build_top_pairs_export(
     edge_df: pd.DataFrame,
     top_n: int = 30,
@@ -802,8 +842,7 @@ def build_top_pairs_export(
     }
     return export_pair_df, export_meta
 
-
-
+# build a clustered ingredient co-occurrence matrix for heatmap plotting
 def build_clustered_heatmap_export(
     df: pd.DataFrame,
     ingredients_col: str = "RecipeIngredientParts",
@@ -827,15 +866,16 @@ def build_clustered_heatmap_export(
         for a, b in itertools.combinations(ingredients_filtered, 2):
             pair_freq[(a, b)] += 1
 
+    # build a symmetric co-occurrence matrix
     co_matrix = pd.DataFrame(0, index=top_ingredients, columns=top_ingredients, dtype=float)
     for (a, b), w in pair_freq.items():
         co_matrix.loc[a, b] = w
         co_matrix.loc[b, a] = w
     for ing in top_ingredients:
-        co_matrix.loc[ing, ing] = 0.0
+        co_matrix.loc[ing, ing] = 0.0 # same-ingredient pairs are set to zero because they're meaningless
 
-    co_matrix_log = np.log1p(co_matrix)
-    order = leaves_list(linkage(co_matrix_log, method="average"))
+    co_matrix_log = np.log1p(co_matrix) # log transform is used to compress extreme count ranges
+    order = leaves_list(linkage(co_matrix_log, method="average")) # reorder rows/columns by hierarchical clustering so related ingredients sit together
     co_matrix_log_clustered = co_matrix_log.iloc[order, order]
 
     if capitalize_labels:
@@ -866,8 +906,9 @@ def build_clustered_heatmap_export(
 
 # ##################
 # Plotly figure builders
+# all functions below are used to create the corresponding figures 
+# from the precomputed JSON exports of plots' data and metadata
 # ##################
-
 
 def build_fig_ingredient_network(nodes: pd.DataFrame, edges: pd.DataFrame, meta: dict) -> go.Figure:
     edge_traces = [
@@ -921,8 +962,6 @@ def build_fig_ingredient_network(nodes: pd.DataFrame, edges: pd.DataFrame, meta:
     fig = go.Figure(data=edge_traces + [node_trace])
     fig.update_layout(**_make_graph_layout(meta["title"]))
     return fig
-
-
 
 def build_fig_ingredient_leiden_graph(nodes: pd.DataFrame, edges: pd.DataFrame, meta: dict) -> go.Figure:
     edge_traces = [
@@ -980,8 +1019,7 @@ def build_fig_ingredient_leiden_graph(nodes: pd.DataFrame, edges: pd.DataFrame, 
     fig.update_layout(**_make_graph_layout(meta["title"]))
     return fig
 
-
-
+# plotting the leiden community members bar chart
 def build_fig_leiden_community_sizes(community_df: pd.DataFrame, meta: dict) -> go.Figure:
     community_df = community_df.sort_values("community").reset_index(drop=True)
     community_df["community_label"] = community_df["community"].apply(lambda x: f"C{x}")
@@ -1023,8 +1061,7 @@ def build_fig_leiden_community_sizes(community_df: pd.DataFrame, meta: dict) -> 
     )
     return fig
 
-
-
+# plotting the top-pairs plot
 def build_fig_top_pairs(plot_df: pd.DataFrame, meta: dict) -> go.Figure:
     fig = px.bar(plot_df, x="weight", y="pair", orientation="h", text="weight", title=meta["title"])
     fig.update_traces(
@@ -1042,8 +1079,7 @@ def build_fig_top_pairs(plot_df: pd.DataFrame, meta: dict) -> go.Figure:
     )
     return fig
 
-
-
+# plotting the heatmap
 def build_fig_clustered_heatmap(matrix: pd.DataFrame, meta: dict) -> go.Figure:
     fig = px.imshow(matrix, color_continuous_scale=meta["colorscale"], title=meta["clustered_title"], aspect="equal")
     fig.update_layout(
@@ -1063,13 +1099,15 @@ def build_fig_clustered_heatmap(matrix: pd.DataFrame, meta: dict) -> go.Figure:
 # Full Plotly JSON export
 # ##################
 
-
 def figure_to_json_dict(fig: go.Figure) -> dict:
-    return fig.to_plotly_json()
-
+    return fig.to_plotly_json() # convert a Plotly figure into a JSON-serializable dictionary
 
 
 def build_all_figures(df: pd.DataFrame, config: dict = RUN_CONFIG) -> dict[str, dict]:
+    """
+    Build all enabled ingredient-network figures and return them as Plotly JSON dicts
+    This includes all figures plotted in this file
+    """
     standalone = {}
     capitalize_labels = bool(config["capitalize_labels"])
     recipe_col = config["recipe_col"]
@@ -1150,8 +1188,6 @@ def build_all_figures(df: pd.DataFrame, config: dict = RUN_CONFIG) -> dict[str, 
 
     return standalone
 
-
-
 def export_plotly_payload(payload: dict, output_dir: str | Path, filename: str) -> Path:
     output_dir = Path(output_dir)
     ensure_dir(output_dir)
@@ -1159,21 +1195,19 @@ def export_plotly_payload(payload: dict, output_dir: str | Path, filename: str) 
     safe_write_json(payload, out_path)
     return out_path
 
-
 # ##################
-# Main
+# main()
 # ##################
-
 
 def main(config: dict = RUN_CONFIG):
     output_dir = Path(config["output_dir"])
     ensure_dir(output_dir)
 
-    print("\n══════════════════════════════════════════════════════")
+    print("\n==============================================")
     print("  Ingredient Network Pipeline")
-    print("══════════════════════════════════════════════════════\n")
+    print("==============================================\n")
 
-    print("🥗 Loading ingredient data...")
+    print("Loading ingredient data...")
     df = load_recipes_from_sqlite(
         db_path=config["db_path"],
         table_name=config["table_name"],
@@ -1181,11 +1215,11 @@ def main(config: dict = RUN_CONFIG):
         ingredients_col=config["ingredients_col"],
         where=config["where"],
     )
-    print(f"✅ Loaded and cleaned {len(df):,} recipes")
+    print(f"Loaded and cleaned {len(df):,} recipes")
 
-    print("🕸️ Computing ingredient graph structures and building figures...")
+    print("Computing ingredient graph structures and building figures...")
     standalone_figures = build_all_figures(df, config=config)
-    print(f"🎨 Built {len(standalone_figures)} Plotly figures")
+    print(f"Built {len(standalone_figures)} Plotly figures")
 
     payload = {
         "visualization": "ingredient_network",
@@ -1203,16 +1237,14 @@ def main(config: dict = RUN_CONFIG):
         },
     }
 
-    print("💾 Exporting Plotly JSON payload...")
+    print("Exporting Plotly JSON payload...")
     out_path = export_plotly_payload(payload, output_dir, config["json_filename"])
 
-    print("📋 Summary")
+    print("Summary")
     print(f"   • Recipes after cleaning: {len(df):,}")
     print(f"   • Figures exported: {len(standalone_figures)}")
     print(f"   • Output file: {out_path}")
 
     return {"output_path": str(out_path), "figure_keys": list(standalone_figures.keys())}
-
-
 if __name__ == "__main__":
     main()

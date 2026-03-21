@@ -26,9 +26,6 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 warnings.filterwarnings("ignore")
 
-# ##################
-# CONFIG
-# ##################
 DB_PATH = "./data/tables/food_recipe.db"
 OUTPUT_DIR = "./plots"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -110,7 +107,7 @@ APP_FIGURE_KEYS = {
 }
 
 # ##################
-# SMALL HELPERS
+# Helpers
 # ##################
 def hex_to_rgba(h: str, a: float = 1.0) -> str:
     h = h.lstrip("#")
@@ -187,10 +184,10 @@ def figure_to_payload(fig: go.Figure) -> dict:
     return json.loads(json.dumps(fig.to_plotly_json(), cls=PlotlyJSONEncoder))
 
 # ##################
-# DATA / FEATURE PIPELINE
+# Feature Pipeline
 # ##################
 def load_data() -> tuple[pd.DataFrame, pd.DataFrame]:
-    print("📂  Loading data...")
+    print("Loading data...")
     conn = sqlite3.connect(DB_PATH)
     recipes = pd.read_sql("SELECT * FROM recipes", conn)
     reviews = pd.read_sql("SELECT * FROM reviews", conn)
@@ -201,7 +198,7 @@ def load_data() -> tuple[pd.DataFrame, pd.DataFrame]:
 
 
 def clean_recipes(recipes: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
-    print("🔧  Cleaning recipes...")
+    print("Cleaning recipes...")
     df = recipes.copy()
 
     for col in NUTRITION_COLS + TIME_COLS + ["AggregatedRating", "ReviewCount", "RecipeServings"]:
@@ -248,7 +245,7 @@ def clean_recipes(recipes: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
 
 
 def clean_reviews(reviews: pd.DataFrame, recipes: pd.DataFrame) -> pd.DataFrame:
-    print("🔧  Cleaning reviews...")
+    print("Cleaning reviews...")
     df = reviews.copy()
     df["Rating"] = pd.to_numeric(df["Rating"], errors="coerce")
     df = df.dropna(subset=["Rating", "RecipeId", "AuthorId"])
@@ -267,7 +264,7 @@ def clean_reviews(reviews: pd.DataFrame, recipes: pd.DataFrame) -> pd.DataFrame:
 
 
 def score_sentiment(reviews: pd.DataFrame) -> pd.DataFrame:
-    print("💬  Scoring sentiment (VADER)...")
+    print("Scoring sentiment (VADER)...")
     analyzer = SentimentIntensityAnalyzer()
     texts = reviews["Review"].fillna("").astype(str).tolist()
     scores = [analyzer.polarity_scores(t)["compound"] for t in texts]
@@ -280,7 +277,7 @@ def score_sentiment(reviews: pd.DataFrame) -> pd.DataFrame:
 
 
 def engineer_reviewer_features(reviews: pd.DataFrame) -> pd.DataFrame:
-    print("👤  Engineering reviewer features (leave-one-out)...")
+    print("Engineering reviewer features (leave-one-out)...")
     rev_stats = (
         reviews.groupby("AuthorId")["Rating"]
         .agg(
@@ -316,7 +313,7 @@ def engineer_reviewer_features(reviews: pd.DataFrame) -> pd.DataFrame:
 
 
 def build_joint(reviews: pd.DataFrame, recipes: pd.DataFrame) -> pd.DataFrame:
-    print("🔗  Joining reviews with recipe features...")
+    print("Joining reviews with recipe features...")
     recipe_feature_cols = (
         NUTRITION_COLS
         + [f"log_{c}" for c in TIME_COLS]
@@ -364,7 +361,7 @@ def build_joint(reviews: pd.DataFrame, recipes: pd.DataFrame) -> pd.DataFrame:
 
 
 def build_feature_matrix(joint: pd.DataFrame, cat_cols: list[str]):
-    print("🔧  Building feature matrix...")
+    print("Building feature matrix...")
     recipe_features = (
         NUTRITION_COLS
         + [f"log_{c}" for c in TIME_COLS]
@@ -420,13 +417,13 @@ def build_feature_matrix(joint: pd.DataFrame, cat_cols: list[str]):
     return X_base, X_with_sentiment, y_star, y_sentiment, y_gap, feat_groups
 
 # ##################
-# MODELING / SUMMARIES
+# Modeling and summaries
 # ##################
 def train_lgb(X: pd.DataFrame, y: np.ndarray, label: str):
     from sklearn.metrics import mean_squared_error, r2_score
     from sklearn.model_selection import train_test_split
 
-    print(f"🌲  Training LightGBM [{label}]...")
+    print(f"Training LightGBM [{label}]...")
     X_tr, X_val, y_tr, y_val = train_test_split(X, y, test_size=0.15, random_state=RANDOM_STATE)
     model = lgb.LGBMRegressor(**LGB_PARAMS)
     model.fit(
@@ -444,9 +441,8 @@ def train_lgb(X: pd.DataFrame, y: np.ndarray, label: str):
     print(f"    [{label}] R²={r2:.4f}  RMSE={rmse:.4f}  best_iter={model.best_iteration_}")
     return model, r2, rmse, y_pred
 
-
 def compute_shap(model, X: pd.DataFrame, label: str, sample_size: int = SHAP_SAMPLE_SIZE):
-    print(f"🔍  Computing SHAP [{label}] on {min(len(X), sample_size):,} samples...")
+    print(f"Computing SHAP [{label}] on {min(len(X), sample_size):,} samples...")
     if len(X) > sample_size:
         idx = np.random.RandomState(RANDOM_STATE).choice(len(X), sample_size, replace=False)
         X_sample = X.iloc[idx]
@@ -458,7 +454,6 @@ def compute_shap(model, X: pd.DataFrame, label: str, sample_size: int = SHAP_SAM
     mean_abs = pd.Series(np.abs(shap_vals).mean(axis=0), index=X_sample.columns, name=f"shap_{label}")
     print(f"    Top feature: {mean_abs.idxmax()} ({mean_abs.max():.5f})")
     return shap_vals, mean_abs, X_sample
-
 
 def decompose_shap_by_group(mean_abs_shap: pd.Series, feat_groups: dict[str, str]) -> pd.DataFrame:
     rows = []
@@ -475,7 +470,6 @@ def decompose_shap_by_group(mean_abs_shap: pd.Series, feat_groups: dict[str, str
             "pct_of_total": round(s / total * 100, 2) if total > 0 else 0,
         })
     return pd.DataFrame(rows).sort_values("total_shap", ascending=False)
-
 
 def build_shap_comparison_table(
     shap_star: pd.Series,
@@ -526,9 +520,8 @@ def build_shap_comparison_table(
     )
     return df
 
-
 def category_reliability(joint: pd.DataFrame, top_n: int = TOP_N_CATEGORIES) -> pd.DataFrame:
-    print(f"\n📂  Computing category reliability map (top {top_n})...")
+    print(f"\nComputing category reliability map (top {top_n})...")
     top_cats = joint["RecipeCategory"].value_counts().nlargest(top_n).index.tolist()
 
     results = []
@@ -561,8 +554,9 @@ def category_reliability(joint: pd.DataFrame, top_n: int = TOP_N_CATEGORIES) -> 
     return pd.DataFrame(results).sort_values("pearson_r")
 
 # ##################
-# APP-USED FIGURE BUILDERS ONLY
+# For app figures only
 # ##################
+
 def add_grouped_shap_bar(fig, comp_df: pd.DataFrame, row: int, col: int):
     d = comp_df.copy()
     d["feature_pretty"] = pretty_feature_name(d["feature"])
@@ -588,7 +582,6 @@ def add_grouped_shap_bar(fig, comp_df: pd.DataFrame, row: int, col: int):
     ), row=row, col=col)
     fig.update_xaxes(title_text="Normalized mean |SHAP| within model", row=row, col=col)
     fig.update_yaxes(title_text="", row=row, col=col)
-
 
 def add_shap_ternary(fig, comp_df: pd.DataFrame, row: int, col: int):
     d = comp_df.copy()
@@ -669,7 +662,6 @@ def add_shap_ternary(fig, comp_df: pd.DataFrame, row: int, col: int):
         col=col,
     )
 
-
 def add_shap_ridge_violin(
     fig,
     comp_df: pd.DataFrame,
@@ -733,7 +725,6 @@ def add_shap_ridge_violin(
     fig.update_xaxes(title_text="Per-sample SHAP value distribution", row=row, col=col)
     fig.update_yaxes(title_text="", row=row, col=col)
 
-
 def make_combined_decomposition_figure(
     decomp_star: pd.DataFrame,
     decomp_sent: pd.DataFrame,
@@ -776,7 +767,6 @@ def make_combined_decomposition_figure(
 
     return apply_single_figure_layout(fig, "Combined SHAP Variance Decomposition", height=560)
 
-
 def make_rating_histogram(joint: pd.DataFrame) -> go.Figure:
     fig = go.Figure(go.Histogram(
         x=joint["Rating"].values, nbinsx=5, marker_color=C["star"], marker_opacity=0.8,
@@ -785,7 +775,6 @@ def make_rating_histogram(joint: pd.DataFrame) -> go.Figure:
     fig.update_xaxes(title_text="Star Rating")
     fig.update_yaxes(title_text="Count")
     return apply_single_figure_layout(fig, "Star Rating Distribution", height=450)
-
 
 def make_category_reliability_figure(cat_rel: pd.DataFrame) -> go.Figure:
     d = cat_rel.copy().sort_values("pearson_r", ascending=False).reset_index(drop=True)
@@ -881,12 +870,10 @@ def make_category_reliability_figure(cat_rel: pd.DataFrame) -> go.Figure:
     )
     return fig
 
-
 def make_grouped_shap_figure(comp_df: pd.DataFrame) -> go.Figure:
     fig = make_subplots(rows=1, cols=1, specs=[[{"type": "bar"}]])
     add_grouped_shap_bar(fig, comp_df, row=1, col=1)
     return apply_single_figure_layout(fig, "Grouped Cross-Model SHAP Comparison", height=750, showlegend=True, barmode="group")
-
 
 def make_ternary_figure(comp_df: pd.DataFrame) -> go.Figure:
     fig = make_subplots(rows=1, cols=1, specs=[[{"type": "ternary"}]])
@@ -910,7 +897,6 @@ def make_ternary_figure(comp_df: pd.DataFrame) -> go.Figure:
     )
     return fig
 
-
 def make_ridge_figure(
     comp_df: pd.DataFrame,
     sv_star: np.ndarray,
@@ -925,8 +911,9 @@ def make_ridge_figure(
     return apply_single_figure_layout(fig, "Ridge-Style SHAP Distribution by Feature", height=850, showlegend=False)
 
 # ##################
-# EXPORT
+# Exporting
 # ##################
+
 def build_app_payload(
     r2_star,
     rmse_star,
@@ -950,7 +937,7 @@ def build_app_payload(
     X_samp_sent: pd.DataFrame,
     X_samp_gap: pd.DataFrame,
 ) -> dict:
-    print("\n💾  Building app payload...")
+    print("\nBuilding app payload...")
 
     meta = {
         "model_star": {"r2": round(r2_star, 4), "rmse": round(rmse_star, 4)},
@@ -1003,7 +990,6 @@ def build_app_payload(
         },
     }
 
-
 def save_app_json(payload: dict) -> str:
     out = os.path.join(OUTPUT_DIR, "plot_features.json")
     with open(out, "w") as f:
@@ -1015,9 +1001,9 @@ def save_app_json(payload: dict) -> str:
 # MAIN
 # ##################
 def main():
-    print("\n══════════════════════════════════════════════════════")
+    print("\n============================")
     print("  Feature Importance Pipeline")
-    print("══════════════════════════════════════════════════════\n")
+    print("=================================\n")
 
     recipes, reviews = load_data()
     # recipes, reviews = recipes.head(10000), reviews.head(50000)
@@ -1055,9 +1041,9 @@ def main():
     )
     save_app_json(payload)
 
-    print("\n══════════════════════════════════════════════════════")
+    print("\n================================")
     print("  Final Summary")
-    print("══════════════════════════════════════════════════════")
+    print("==================================")
     print(f"\n  Model R²:")
     print(f"    Star Rating : {r2_star:.4f}")
     print(f"    Sentiment   : {r2_sent:.4f}")

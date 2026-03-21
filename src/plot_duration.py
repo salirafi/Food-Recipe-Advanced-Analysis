@@ -1,8 +1,15 @@
 #!/usr/bin/env python3
 """
-Functions to build the cooking time duration distribution figure.
-The figure's data and metadata are exported as a standalone JSON.
-No processed data being output!
+Functions to build the cooking-time duration figure used by the web app.
+
+The pipeline:
+1. loads only the recipe/review columns needed for this visualization,
+2. cleans and filters time-related fields,
+3. aggregates review statistics per recipe,
+4. builds an intermediate windrose-style payload, and
+5. exports the final Plotly JSON payload for the app.
+
+No processed table is exported; only the figure payload is written out.
 """
 
 from __future__ import annotations
@@ -19,19 +26,14 @@ from plotly.utils import PlotlyJSONEncoder
 
 warnings.filterwarnings("ignore", category=pd.errors.PerformanceWarning)
 
-
-# ##################
-# Config
-# ##################
-
 BASE_DIR = Path(__file__).resolve().parents[1]
 DB_PATH = BASE_DIR / "data" / "tables" / "food_recipe.db"
 OUT_DIR = BASE_DIR / "plots"
 DEFAULT_WINDROSE_OUTPUT_DIR = OUT_DIR
 JSON_FILENAME = "plot_duration.json"
 
-MAX_TOTAL_TIME_SEC = 172_800
-TIME_CONSISTENCY_TOL = 60
+MAX_TOTAL_TIME_SEC = 172_800 # hard cap to exclude extreme durations (> 48 hours).
+TIME_CONSISTENCY_TOL = 60 # allowed mismatch between PrepTime + CookTime and TotalTime
 
 TOTAL_TIME_BIN_EDGES_SEC = np.array([
     0,
@@ -76,10 +78,10 @@ WEBAPP_PANELS = {
 # Data loading / preparation
 # ##################
 
-
+# load only the recipe and review columns needed for the duration figure.
 def load_duration_data() -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Load only the columns needed to build the app-used duration figure."""
-    print("[1/4] Loading data from SQLite …")
+
+    print("Loading data from SQLite ...")
     con = sqlite3.connect(DB_PATH)
 
     recipes = pd.read_sql_query(
@@ -106,11 +108,10 @@ def load_duration_data() -> tuple[pd.DataFrame, pd.DataFrame]:
     print(f"    reviews loaded : {len(reviews):,}")
     return recipes, reviews
 
-
-
+# clean recipe time columns and assign each recipe to a total-time sector
 def clean_recipe_times(recipes: pd.DataFrame) -> pd.DataFrame:
-    """Filter recipes and assign total-time sectors."""
-    print("[2/4] Cleaning and filtering recipes …")
+
+    print("Cleaning and filtering recipes ...")
     df = recipes.copy()
     n0 = len(df)
 
@@ -119,10 +120,11 @@ def clean_recipe_times(recipes: pd.DataFrame) -> pd.DataFrame:
 
     df = df.dropna(subset=["PrepTime", "CookTime", "TotalTime"])
     df = df[(df["PrepTime"] > 0) & (df["CookTime"] > 0) & (df["TotalTime"] > 0)]
-    df = df[df["TotalTime"] <= MAX_TOTAL_TIME_SEC]
+
+    df = df[df["TotalTime"] <= MAX_TOTAL_TIME_SEC] # remove extreme total times that are likely bad records
 
     deviation = (df["PrepTime"] + df["CookTime"] - df["TotalTime"]).abs()
-    df = df[deviation <= TIME_CONSISTENCY_TOL].copy()
+    df = df[deviation <= TIME_CONSISTENCY_TOL].copy() # keep only rows where TotalTime is approximately PrepTime + CookTime
 
     df["sector_total_time"] = pd.cut(
         df["TotalTime"],
@@ -135,11 +137,9 @@ def clean_recipe_times(recipes: pd.DataFrame) -> pd.DataFrame:
     print(f"    kept {len(df):,} / {n0:,} recipes")
     return df
 
-
-
 def attach_recipe_review_stats(recipes: pd.DataFrame, reviews: pd.DataFrame) -> pd.DataFrame:
-    """Attach per-recipe review count and mean rating."""
-    print("[3/4] Aggregating review statistics …")
+
+    print("Aggregating review statistics ...")
     review_stats = (
         reviews.groupby("RecipeId")
         .agg(mean_rating_r=("Rating", "mean"), review_count_r=("Rating", "count"))
@@ -155,7 +155,6 @@ def attach_recipe_review_stats(recipes: pd.DataFrame, reviews: pd.DataFrame) -> 
 # Figure builder helpers
 # ##################
 
-
 def build_total_time_category_population_payload(
     recipes_out: pd.DataFrame,
     *,
@@ -164,11 +163,20 @@ def build_total_time_category_population_payload(
     total_time_edges: list[float] | None = None,
 ) -> dict:
     """
-    Build the exact intermediate payload used to construct the app-used
-    duration windrose. This is kept internal to the module and is not the
-    final export format.
+    Build the intermediate payload for the total-time windrose figure
+
+    Each angular sector corresponds to one total-time bin. The wedge radius is
+    proportional to sqrt(N_bin / N_total), so sector area scales with the share
+    of recipes in that time regime. Within each wedge, the top recipe
+    categories are stacked as radial segments
+
+    Returns:
+    dict
+        A plotting payload containing per-sector geometry, category segments,
+        and figure metadata.
     """
     work = recipes_out.copy()
+
     work["RecipeCategory"] = work["RecipeCategory"].fillna("").astype(str).str.strip()
     work = work[(work["RecipeCategory"] != "") & (work["RecipeCategory"].str.lower() != "nan")].copy()
     if work.empty:
@@ -185,13 +193,18 @@ def build_total_time_category_population_payload(
     for sector_idx in range(n_bins):
         group = work[work["sector_total_time"] == sector_idx].copy()
         recipe_count = int(len(group))
+
+        # radius is scaled by sqrt(share) so wedge area, not radius itself, reflects the population fraction.
         radius = float(np.sqrt(recipe_count / total_recipes)) if recipe_count > 0 else 0.0
 
+        # keep only the top categories within this wedge
         cat_counts = group["RecipeCategory"].value_counts().head(top_n)
         segments = []
         for cat, count in cat_counts.items():
             count_i = int(count)
             frac = count_i / recipe_count if recipe_count else 0.0
+
+            # each segment gets a fraction of the wedge radius proportional to its share within the wedge
             seg_r = radius * frac
             segments.append({
                 "category": cat,
@@ -201,12 +214,16 @@ def build_total_time_category_population_payload(
             })
             all_categories.add(cat)
 
+        # compute review-weighted average rating for this wedge
+        # review count acts as the weight so recipes with more reviews have
+        # more influence on the wedge-level rating summary
         weights = pd.to_numeric(group.get("review_count_r", 0), errors="coerce").fillna(0.0).clip(lower=0.0)
         ratings = pd.to_numeric(group.get("mean_rating_r", np.nan), errors="coerce")
         valid = ratings.notna()
         if recipe_count and valid.any() and float(weights[valid].sum()) > 0:
             weighted_rating = float(np.average(ratings[valid], weights=weights[valid]))
         elif recipe_count and valid.any():
+            # fallback to unweighted mean if weights are all zero
             weighted_rating = float(ratings[valid].mean())
         else:
             weighted_rating = float("nan")
@@ -255,9 +272,14 @@ def build_total_time_category_population_payload(
         "sectors": sector_rows,
     }
 
-
-
 def build_total_time_category_population_figure(plot_data: dict) -> go.Figure:
+    """
+    Convert the intermediate total-time payload into the final Plotly figure
+
+    The main stacked Barpolar traces encode category composition within each
+    time wedge, while the outer ring encodes the wedge-level weighted average
+    rating
+    """
     meta = plot_data["metadata"]
     sectors = plot_data["sectors"]
     if not sectors:
@@ -271,6 +293,9 @@ def build_total_time_category_population_figure(plot_data: dict) -> go.Figure:
 
     theta = [sector["angle_deg"] for sector in sectors]
     width = [meta["sector_width_deg"]] * len(sectors)
+
+    # These values control the overall radial geometry of the figure.
+    # radial_max_main is intentionally fixed here for display stability across runs.
     radial_max_main = 0.20  # float(meta.get("radial_max_main", 1.0))
     ring_gap = min(0.03, radial_max_main * 0.01)
     ring_base = radial_max_main + ring_gap
@@ -279,6 +304,8 @@ def build_total_time_category_population_figure(plot_data: dict) -> go.Figure:
 
     traces: list[go.Barpolar] = []
 
+    # One stacked Barpolar trace per category.
+    # Categories absent from a wedge get r=0 for that wedge.
     for cat in all_categories:
         r_vals = []
         hover = []
@@ -319,6 +346,8 @@ def build_total_time_category_population_figure(plot_data: dict) -> go.Figure:
     ring_hover = []
     ring_color = []
 
+    # build the outer rating ring,
+    # ring thickness varies slightly with rating, and ring color also encodes rating
     for sector in sectors:
         rating = sector.get("weighted_avg_rating")
         if np.isfinite(rating):
@@ -408,16 +437,22 @@ def build_total_time_category_population_figure(plot_data: dict) -> go.Figure:
 # Export writer
 # ##################
 
-
 class _PathAwarePlotlyEncoder(PlotlyJSONEncoder):
+    """
+    Plotly JSON encoder with extra support for pathlib.Path objects
+
+    Standard json.dump cannot serialize Path directly, so paths are converted
+    to strings before export
+    """
     def default(self, obj):
         if isinstance(obj, Path):
             return str(obj)
         return super().default(obj)
 
-
-
 def export_plotly_payload(payload: dict, output_dir: str | Path, filename: str = JSON_FILENAME) -> Path:
+    """
+    Write the final Plotly payload to disk and return the output path
+    """
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     out_path = output_dir / filename
@@ -430,8 +465,10 @@ def export_plotly_payload(payload: dict, output_dir: str | Path, filename: str =
 # Full payload builder
 # ##################
 
-
 def build_duration_payload(recipes_out: pd.DataFrame) -> dict:
+    """
+    Build the final app payload containing the duration figure as Plotly JSON
+    """
     intermediate = build_total_time_category_population_payload(
         recipes_out,
         top_n=TOP_CATEGORIES_PER_WEDGE,
@@ -454,9 +491,8 @@ def build_duration_payload(recipes_out: pd.DataFrame) -> dict:
 
 
 # ##################
-# Heavy-compute entrypoint
+# main()
 # ##################
-
 
 def main() -> None:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -465,12 +501,10 @@ def main() -> None:
     recipes = clean_recipe_times(recipes)
     recipes_out = attach_recipe_review_stats(recipes, reviews)
 
-    print("[4/4] Building and exporting app payload …")
+    print("Building and exporting app payload ...")
     payload = build_duration_payload(recipes_out)
     payload_path = export_plotly_payload(payload, OUT_DIR, JSON_FILENAME)
     print(f"    JSON → {payload_path}")
     print("\nDone.")
-
-
 if __name__ == "__main__":
     main()
