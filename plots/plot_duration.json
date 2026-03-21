@@ -1,0 +1,1579 @@
+{
+  "standalone_figures": {
+    "windrose_total_time_population": {
+      "data": [
+        {
+          "hoverinfo": "text",
+          "hovertext": [
+            "<b>Total time bin: 0–15 min</b><br>Category: Beverages<br>Recipes in category segment: 1,409<br>Segment share of wedge: 7.8%<br>Recipes in wedge: 18,054<br>Wedge radius: 0.285<br>Weighted avg rating: 4.418 ★<br>Reviews in wedge: 95,134",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          "marker": {
+            "color": "#4C78A8",
+            "line": {
+              "color": "black",
+              "width": 1.2
+            }
+          },
+          "name": "Beverages",
+          "opacity": 0.95,
+          "r": [
+            0.02221649036416437,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "showlegend": false,
+          "theta": [
+            0.0,
+            45.0,
+            90.0,
+            135.0,
+            180.0,
+            225.0,
+            270.0,
+            315.0
+          ],
+          "width": [
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0
+          ],
+          "type": "barpolar"
+        },
+        {
+          "hoverinfo": "text",
+          "hovertext": [
+            "<b>Total time bin: 0–15 min</b><br>Category: Breakfast<br>Recipes in category segment: 2,245<br>Segment share of wedge: 12.4%<br>Recipes in wedge: 18,054<br>Wedge radius: 0.285<br>Weighted avg rating: 4.418 ★<br>Reviews in wedge: 95,134",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          "marker": {
+            "color": "#F58518",
+            "line": {
+              "color": "black",
+              "width": 1.2
+            }
+          },
+          "name": "Breakfast",
+          "opacity": 0.95,
+          "r": [
+            0.03539816952984316,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "showlegend": false,
+          "theta": [
+            0.0,
+            45.0,
+            90.0,
+            135.0,
+            180.0,
+            225.0,
+            270.0,
+            315.0
+          ],
+          "width": [
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0
+          ],
+          "type": "barpolar"
+        },
+        {
+          "hoverinfo": "text",
+          "hovertext": [
+            "",
+            "",
+            "",
+            "",
+            "",
+            "<b>Total time bin: 1.5–2 h</b><br>Category: Chicken<br>Recipes in category segment: 377<br>Segment share of wedge: 4.4%<br>Recipes in wedge: 8,480<br>Wedge radius: 0.195<br>Weighted avg rating: 4.375 ★<br>Reviews in wedge: 41,258",
+            "",
+            ""
+          ],
+          "marker": {
+            "color": "#54A24B",
+            "line": {
+              "color": "black",
+              "width": 1.2
+            }
+          },
+          "name": "Chicken",
+          "opacity": 0.95,
+          "r": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.008673504390480827,
+            0.0,
+            0.0
+          ],
+          "showlegend": false,
+          "theta": [
+            0.0,
+            45.0,
+            90.0,
+            135.0,
+            180.0,
+            225.0,
+            270.0,
+            315.0
+          ],
+          "width": [
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0
+          ],
+          "type": "barpolar"
+        },
+        {
+          "hoverinfo": "text",
+          "hovertext": [
+            "<b>Total time bin: 0–15 min</b><br>Category: Dessert<br>Recipes in category segment: 1,350<br>Segment share of wedge: 7.5%<br>Recipes in wedge: 18,054<br>Wedge radius: 0.285<br>Weighted avg rating: 4.418 ★<br>Reviews in wedge: 95,134",
+            "<b>Total time bin: 15–30 min</b><br>Category: Dessert<br>Recipes in category segment: 4,589<br>Segment share of wedge: 8.4%<br>Recipes in wedge: 54,375<br>Wedge radius: 0.494<br>Weighted avg rating: 4.417 ★<br>Reviews in wedge: 286,770",
+            "<b>Total time bin: 30–45 min</b><br>Category: Dessert<br>Recipes in category segment: 5,280<br>Segment share of wedge: 11.2%<br>Recipes in wedge: 46,981<br>Wedge radius: 0.459<br>Weighted avg rating: 4.409 ★<br>Reviews in wedge: 248,375",
+            "<b>Total time bin: 45–60 min</b><br>Category: Dessert<br>Recipes in category segment: 5,098<br>Segment share of wedge: 15.5%<br>Recipes in wedge: 32,839<br>Wedge radius: 0.384<br>Weighted avg rating: 4.399 ★<br>Reviews in wedge: 171,214",
+            "<b>Total time bin: 1–1.5 h</b><br>Category: Dessert<br>Recipes in category segment: 5,568<br>Segment share of wedge: 16.2%<br>Recipes in wedge: 34,359<br>Wedge radius: 0.393<br>Weighted avg rating: 4.398 ★<br>Reviews in wedge: 183,010",
+            "<b>Total time bin: 1.5–2 h</b><br>Category: Dessert<br>Recipes in category segment: 1,161<br>Segment share of wedge: 13.7%<br>Recipes in wedge: 8,480<br>Wedge radius: 0.195<br>Weighted avg rating: 4.375 ★<br>Reviews in wedge: 41,258",
+            "<b>Total time bin: 2–4 h</b><br>Category: Dessert<br>Recipes in category segment: 1,351<br>Segment share of wedge: 9.4%<br>Recipes in wedge: 14,302<br>Wedge radius: 0.253<br>Weighted avg rating: 4.352 ★<br>Reviews in wedge: 78,381",
+            "<b>Total time bin: >4 h</b><br>Category: Dessert<br>Recipes in category segment: 752<br>Segment share of wedge: 5.6%<br>Recipes in wedge: 13,401<br>Wedge radius: 0.245<br>Weighted avg rating: 4.295 ★<br>Reviews in wedge: 81,127"
+          ],
+          "marker": {
+            "color": "#E45756",
+            "line": {
+              "color": "black",
+              "width": 1.2
+            }
+          },
+          "name": "Dessert",
+          "opacity": 0.95,
+          "r": [
+            0.02128620439433776,
+            0.04169361975237405,
+            0.05160882516739579,
+            0.059601343280374586,
+            0.06363999655521431,
+            0.026710712459809657,
+            0.023933606189941517,
+            0.013762597717536375
+          ],
+          "showlegend": false,
+          "theta": [
+            0.0,
+            45.0,
+            90.0,
+            135.0,
+            180.0,
+            225.0,
+            270.0,
+            315.0
+          ],
+          "width": [
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0
+          ],
+          "type": "barpolar"
+        },
+        {
+          "hoverinfo": "text",
+          "hovertext": [
+            "<b>Total time bin: 0–15 min</b><br>Category: Lunch/Snacks<br>Recipes in category segment: 2,250<br>Segment share of wedge: 12.5%<br>Recipes in wedge: 18,054<br>Wedge radius: 0.285<br>Weighted avg rating: 4.418 ★<br>Reviews in wedge: 95,134",
+            "<b>Total time bin: 15–30 min</b><br>Category: Lunch/Snacks<br>Recipes in category segment: 5,104<br>Segment share of wedge: 9.4%<br>Recipes in wedge: 54,375<br>Wedge radius: 0.494<br>Weighted avg rating: 4.417 ★<br>Reviews in wedge: 286,770",
+            "<b>Total time bin: 30–45 min</b><br>Category: Lunch/Snacks<br>Recipes in category segment: 2,959<br>Segment share of wedge: 6.3%<br>Recipes in wedge: 46,981<br>Wedge radius: 0.459<br>Weighted avg rating: 4.409 ★<br>Reviews in wedge: 248,375",
+            "<b>Total time bin: 45–60 min</b><br>Category: Lunch/Snacks<br>Recipes in category segment: 1,472<br>Segment share of wedge: 4.5%<br>Recipes in wedge: 32,839<br>Wedge radius: 0.384<br>Weighted avg rating: 4.399 ★<br>Reviews in wedge: 171,214",
+            "",
+            "",
+            "",
+            ""
+          ],
+          "marker": {
+            "color": "#72B7B2",
+            "line": {
+              "color": "black",
+              "width": 1.2
+            }
+          },
+          "name": "Lunch/Snacks",
+          "opacity": 0.95,
+          "r": [
+            0.03547700732389627,
+            0.04637268145916695,
+            0.028922445770894725,
+            0.017209332543882187,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "showlegend": false,
+          "theta": [
+            0.0,
+            45.0,
+            90.0,
+            135.0,
+            180.0,
+            225.0,
+            270.0,
+            315.0
+          ],
+          "width": [
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0
+          ],
+          "type": "barpolar"
+        },
+        {
+          "hoverinfo": "text",
+          "hovertext": [
+            "",
+            "<b>Total time bin: 15–30 min</b><br>Category: One Dish Meal<br>Recipes in category segment: 3,549<br>Segment share of wedge: 6.5%<br>Recipes in wedge: 54,375<br>Wedge radius: 0.494<br>Weighted avg rating: 4.417 ★<br>Reviews in wedge: 286,770",
+            "<b>Total time bin: 30–45 min</b><br>Category: One Dish Meal<br>Recipes in category segment: 3,752<br>Segment share of wedge: 8.0%<br>Recipes in wedge: 46,981<br>Wedge radius: 0.459<br>Weighted avg rating: 4.409 ★<br>Reviews in wedge: 248,375",
+            "<b>Total time bin: 45–60 min</b><br>Category: One Dish Meal<br>Recipes in category segment: 3,057<br>Segment share of wedge: 9.3%<br>Recipes in wedge: 32,839<br>Wedge radius: 0.384<br>Weighted avg rating: 4.399 ★<br>Reviews in wedge: 171,214",
+            "<b>Total time bin: 1–1.5 h</b><br>Category: One Dish Meal<br>Recipes in category segment: 2,892<br>Segment share of wedge: 8.4%<br>Recipes in wedge: 34,359<br>Wedge radius: 0.393<br>Weighted avg rating: 4.398 ★<br>Reviews in wedge: 183,010",
+            "<b>Total time bin: 1.5–2 h</b><br>Category: One Dish Meal<br>Recipes in category segment: 783<br>Segment share of wedge: 9.2%<br>Recipes in wedge: 8,480<br>Wedge radius: 0.195<br>Weighted avg rating: 4.375 ★<br>Reviews in wedge: 41,258",
+            "<b>Total time bin: 2–4 h</b><br>Category: One Dish Meal<br>Recipes in category segment: 845<br>Segment share of wedge: 5.9%<br>Recipes in wedge: 14,302<br>Wedge radius: 0.253<br>Weighted avg rating: 4.352 ★<br>Reviews in wedge: 78,381",
+            "<b>Total time bin: >4 h</b><br>Category: One Dish Meal<br>Recipes in category segment: 1,397<br>Segment share of wedge: 10.4%<br>Recipes in wedge: 13,401<br>Wedge radius: 0.245<br>Weighted avg rating: 4.295 ★<br>Reviews in wedge: 81,127"
+          ],
+          "marker": {
+            "color": "#B279A2",
+            "line": {
+              "color": "black",
+              "width": 1.2
+            }
+          },
+          "name": "One Dish Meal",
+          "opacity": 0.95,
+          "r": [
+            0.0,
+            0.03224464077166605,
+            0.03667354394471004,
+            0.03573976194745099,
+            0.03305439476251432,
+            0.018014201426383256,
+            0.01496957604034092,
+            0.025566953472604143
+          ],
+          "showlegend": false,
+          "theta": [
+            0.0,
+            45.0,
+            90.0,
+            135.0,
+            180.0,
+            225.0,
+            270.0,
+            315.0
+          ],
+          "width": [
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0
+          ],
+          "type": "barpolar"
+        },
+        {
+          "hoverinfo": "text",
+          "hovertext": [
+            "",
+            "",
+            "",
+            "",
+            "",
+            "<b>Total time bin: 1.5–2 h</b><br>Category: Pork<br>Recipes in category segment: 411<br>Segment share of wedge: 4.8%<br>Recipes in wedge: 8,480<br>Wedge radius: 0.195<br>Weighted avg rating: 4.375 ★<br>Reviews in wedge: 41,258",
+            "<b>Total time bin: 2–4 h</b><br>Category: Pork<br>Recipes in category segment: 684<br>Segment share of wedge: 4.8%<br>Recipes in wedge: 14,302<br>Wedge radius: 0.253<br>Weighted avg rating: 4.352 ★<br>Reviews in wedge: 78,381",
+            "<b>Total time bin: >4 h</b><br>Category: Pork<br>Recipes in category segment: 992<br>Segment share of wedge: 7.4%<br>Recipes in wedge: 13,401<br>Wedge radius: 0.245<br>Weighted avg rating: 4.295 ★<br>Reviews in wedge: 81,127"
+          ],
+          "marker": {
+            "color": "#FF9DA6",
+            "line": {
+              "color": "black",
+              "width": 1.2
+            }
+          },
+          "name": "Pork",
+          "opacity": 0.95,
+          "r": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.009455730250630292,
+            0.012117384629104364,
+            0.018154916138026708
+          ],
+          "showlegend": false,
+          "theta": [
+            0.0,
+            45.0,
+            90.0,
+            135.0,
+            180.0,
+            225.0,
+            270.0,
+            315.0
+          ],
+          "width": [
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0
+          ],
+          "type": "barpolar"
+        },
+        {
+          "hoverinfo": "text",
+          "hovertext": [
+            "",
+            "",
+            "",
+            "",
+            "<b>Total time bin: 1–1.5 h</b><br>Category: Quick Breads<br>Recipes in category segment: 1,642<br>Segment share of wedge: 4.8%<br>Recipes in wedge: 34,359<br>Wedge radius: 0.393<br>Weighted avg rating: 4.398 ★<br>Reviews in wedge: 183,010",
+            "",
+            "",
+            ""
+          ],
+          "marker": {
+            "color": "#9D755D",
+            "line": {
+              "color": "black",
+              "width": 1.2
+            }
+          },
+          "name": "Quick Breads",
+          "opacity": 0.95,
+          "r": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.018767398409422036,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "showlegend": false,
+          "theta": [
+            0.0,
+            45.0,
+            90.0,
+            135.0,
+            180.0,
+            225.0,
+            270.0,
+            315.0
+          ],
+          "width": [
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0
+          ],
+          "type": "barpolar"
+        },
+        {
+          "hoverinfo": "text",
+          "hovertext": [
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "<b>Total time bin: >4 h</b><br>Category: Stew<br>Recipes in category segment: 749<br>Segment share of wedge: 5.6%<br>Recipes in wedge: 13,401<br>Wedge radius: 0.245<br>Weighted avg rating: 4.295 ★<br>Reviews in wedge: 81,127"
+          ],
+          "marker": {
+            "color": "#BAB0AC",
+            "line": {
+              "color": "black",
+              "width": 1.2
+            }
+          },
+          "name": "Stew",
+          "opacity": 0.95,
+          "r": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.013707693737280247
+          ],
+          "showlegend": false,
+          "theta": [
+            0.0,
+            45.0,
+            90.0,
+            135.0,
+            180.0,
+            225.0,
+            270.0,
+            315.0
+          ],
+          "width": [
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0
+          ],
+          "type": "barpolar"
+        },
+        {
+          "hoverinfo": "text",
+          "hovertext": [
+            "",
+            "<b>Total time bin: 15–30 min</b><br>Category: Vegetable<br>Recipes in category segment: 4,008<br>Segment share of wedge: 7.4%<br>Recipes in wedge: 54,375<br>Wedge radius: 0.494<br>Weighted avg rating: 4.417 ★<br>Reviews in wedge: 286,770",
+            "<b>Total time bin: 30–45 min</b><br>Category: Vegetable<br>Recipes in category segment: 2,672<br>Segment share of wedge: 5.7%<br>Recipes in wedge: 46,981<br>Wedge radius: 0.459<br>Weighted avg rating: 4.409 ★<br>Reviews in wedge: 248,375",
+            "<b>Total time bin: 45–60 min</b><br>Category: Vegetable<br>Recipes in category segment: 1,725<br>Segment share of wedge: 5.3%<br>Recipes in wedge: 32,839<br>Wedge radius: 0.384<br>Weighted avg rating: 4.399 ★<br>Reviews in wedge: 171,214",
+            "<b>Total time bin: 1–1.5 h</b><br>Category: Vegetable<br>Recipes in category segment: 1,538<br>Segment share of wedge: 4.5%<br>Recipes in wedge: 34,359<br>Wedge radius: 0.393<br>Weighted avg rating: 4.398 ★<br>Reviews in wedge: 183,010",
+            "",
+            "",
+            ""
+          ],
+          "marker": {
+            "color": "#2E91E5",
+            "line": {
+              "color": "black",
+              "width": 1.2
+            }
+          },
+          "name": "Vegetable",
+          "opacity": 0.95,
+          "r": [
+            0.0,
+            0.036414911302574675,
+            0.026117193342288174,
+            0.02016718657486194,
+            0.017578720312844756,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "showlegend": false,
+          "theta": [
+            0.0,
+            45.0,
+            90.0,
+            135.0,
+            180.0,
+            225.0,
+            270.0,
+            315.0
+          ],
+          "width": [
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0
+          ],
+          "type": "barpolar"
+        },
+        {
+          "hoverinfo": "text",
+          "hovertext": [
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "<b>Total time bin: 2–4 h</b><br>Category: Yeast Breads<br>Recipes in category segment: 1,543<br>Segment share of wedge: 10.8%<br>Recipes in wedge: 14,302<br>Wedge radius: 0.253<br>Weighted avg rating: 4.352 ★<br>Reviews in wedge: 78,381",
+            ""
+          ],
+          "marker": {
+            "color": "#E15F99",
+            "line": {
+              "color": "black",
+              "width": 1.2
+            }
+          },
+          "name": "Yeast Breads",
+          "opacity": 0.95,
+          "r": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.027334977313900638,
+            0.0
+          ],
+          "showlegend": false,
+          "theta": [
+            0.0,
+            45.0,
+            90.0,
+            135.0,
+            180.0,
+            225.0,
+            270.0,
+            315.0
+          ],
+          "width": [
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0
+          ],
+          "type": "barpolar"
+        },
+        {
+          "base": [
+            0.202,
+            0.202,
+            0.202,
+            0.202,
+            0.202,
+            0.202,
+            0.202,
+            0.202
+          ],
+          "hoverinfo": "text",
+          "hovertext": [
+            "<b>Total time bin: 0–15 min</b><br>Weighted avg rating: 4.418 ★<br>Reviews in wedge: 95,134<br>Recipes in wedge: 18,054",
+            "<b>Total time bin: 15–30 min</b><br>Weighted avg rating: 4.417 ★<br>Reviews in wedge: 286,770<br>Recipes in wedge: 54,375",
+            "<b>Total time bin: 30–45 min</b><br>Weighted avg rating: 4.409 ★<br>Reviews in wedge: 248,375<br>Recipes in wedge: 46,981",
+            "<b>Total time bin: 45–60 min</b><br>Weighted avg rating: 4.399 ★<br>Reviews in wedge: 171,214<br>Recipes in wedge: 32,839",
+            "<b>Total time bin: 1–1.5 h</b><br>Weighted avg rating: 4.398 ★<br>Reviews in wedge: 183,010<br>Recipes in wedge: 34,359",
+            "<b>Total time bin: 1.5–2 h</b><br>Weighted avg rating: 4.375 ★<br>Reviews in wedge: 41,258<br>Recipes in wedge: 8,480",
+            "<b>Total time bin: 2–4 h</b><br>Weighted avg rating: 4.352 ★<br>Reviews in wedge: 78,381<br>Recipes in wedge: 14,302",
+            "<b>Total time bin: >4 h</b><br>Weighted avg rating: 4.295 ★<br>Reviews in wedge: 81,127<br>Recipes in wedge: 13,401"
+          ],
+          "marker": {
+            "cmax": 5.0,
+            "cmin": 1.0,
+            "color": [
+              4.418094477263649,
+              4.417473933814555,
+              4.409135379969804,
+              4.398518812713913,
+              4.39843177968417,
+              4.3754423384555725,
+              4.3524961406463305,
+              4.294797046605939
+            ],
+            "colorscale": [
+              [
+                0.0,
+                "rgb(247,251,255)"
+              ],
+              [
+                0.125,
+                "rgb(222,235,247)"
+              ],
+              [
+                0.25,
+                "rgb(198,219,239)"
+              ],
+              [
+                0.375,
+                "rgb(158,202,225)"
+              ],
+              [
+                0.5,
+                "rgb(107,174,214)"
+              ],
+              [
+                0.625,
+                "rgb(66,146,198)"
+              ],
+              [
+                0.75,
+                "rgb(33,113,181)"
+              ],
+              [
+                0.875,
+                "rgb(8,81,156)"
+              ],
+              [
+                1.0,
+                "rgb(8,48,107)"
+              ]
+            ],
+            "line": {
+              "color": "black",
+              "width": 0.8
+            },
+            "showscale": false
+          },
+          "opacity": 0.95,
+          "r": [
+            0.020000000000000004,
+            0.01994967101538256,
+            0.01927337518340374,
+            0.018412321777890057,
+            0.018405262990916244,
+            0.016540711466528097,
+            0.014679667186299449,
+            0.010000000000000002
+          ],
+          "showlegend": false,
+          "theta": [
+            0.0,
+            45.0,
+            90.0,
+            135.0,
+            180.0,
+            225.0,
+            270.0,
+            315.0
+          ],
+          "width": [
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0,
+            45.0
+          ],
+          "type": "barpolar"
+        }
+      ],
+      "layout": {
+        "template": {
+          "data": {
+            "histogram2dcontour": [
+              {
+                "type": "histogram2dcontour",
+                "colorbar": {
+                  "outlinewidth": 0,
+                  "ticks": ""
+                },
+                "colorscale": [
+                  [
+                    0.0,
+                    "#0d0887"
+                  ],
+                  [
+                    0.1111111111111111,
+                    "#46039f"
+                  ],
+                  [
+                    0.2222222222222222,
+                    "#7201a8"
+                  ],
+                  [
+                    0.3333333333333333,
+                    "#9c179e"
+                  ],
+                  [
+                    0.4444444444444444,
+                    "#bd3786"
+                  ],
+                  [
+                    0.5555555555555556,
+                    "#d8576b"
+                  ],
+                  [
+                    0.6666666666666666,
+                    "#ed7953"
+                  ],
+                  [
+                    0.7777777777777778,
+                    "#fb9f3a"
+                  ],
+                  [
+                    0.8888888888888888,
+                    "#fdca26"
+                  ],
+                  [
+                    1.0,
+                    "#f0f921"
+                  ]
+                ]
+              }
+            ],
+            "choropleth": [
+              {
+                "type": "choropleth",
+                "colorbar": {
+                  "outlinewidth": 0,
+                  "ticks": ""
+                }
+              }
+            ],
+            "histogram2d": [
+              {
+                "type": "histogram2d",
+                "colorbar": {
+                  "outlinewidth": 0,
+                  "ticks": ""
+                },
+                "colorscale": [
+                  [
+                    0.0,
+                    "#0d0887"
+                  ],
+                  [
+                    0.1111111111111111,
+                    "#46039f"
+                  ],
+                  [
+                    0.2222222222222222,
+                    "#7201a8"
+                  ],
+                  [
+                    0.3333333333333333,
+                    "#9c179e"
+                  ],
+                  [
+                    0.4444444444444444,
+                    "#bd3786"
+                  ],
+                  [
+                    0.5555555555555556,
+                    "#d8576b"
+                  ],
+                  [
+                    0.6666666666666666,
+                    "#ed7953"
+                  ],
+                  [
+                    0.7777777777777778,
+                    "#fb9f3a"
+                  ],
+                  [
+                    0.8888888888888888,
+                    "#fdca26"
+                  ],
+                  [
+                    1.0,
+                    "#f0f921"
+                  ]
+                ]
+              }
+            ],
+            "heatmap": [
+              {
+                "type": "heatmap",
+                "colorbar": {
+                  "outlinewidth": 0,
+                  "ticks": ""
+                },
+                "colorscale": [
+                  [
+                    0.0,
+                    "#0d0887"
+                  ],
+                  [
+                    0.1111111111111111,
+                    "#46039f"
+                  ],
+                  [
+                    0.2222222222222222,
+                    "#7201a8"
+                  ],
+                  [
+                    0.3333333333333333,
+                    "#9c179e"
+                  ],
+                  [
+                    0.4444444444444444,
+                    "#bd3786"
+                  ],
+                  [
+                    0.5555555555555556,
+                    "#d8576b"
+                  ],
+                  [
+                    0.6666666666666666,
+                    "#ed7953"
+                  ],
+                  [
+                    0.7777777777777778,
+                    "#fb9f3a"
+                  ],
+                  [
+                    0.8888888888888888,
+                    "#fdca26"
+                  ],
+                  [
+                    1.0,
+                    "#f0f921"
+                  ]
+                ]
+              }
+            ],
+            "contourcarpet": [
+              {
+                "type": "contourcarpet",
+                "colorbar": {
+                  "outlinewidth": 0,
+                  "ticks": ""
+                }
+              }
+            ],
+            "contour": [
+              {
+                "type": "contour",
+                "colorbar": {
+                  "outlinewidth": 0,
+                  "ticks": ""
+                },
+                "colorscale": [
+                  [
+                    0.0,
+                    "#0d0887"
+                  ],
+                  [
+                    0.1111111111111111,
+                    "#46039f"
+                  ],
+                  [
+                    0.2222222222222222,
+                    "#7201a8"
+                  ],
+                  [
+                    0.3333333333333333,
+                    "#9c179e"
+                  ],
+                  [
+                    0.4444444444444444,
+                    "#bd3786"
+                  ],
+                  [
+                    0.5555555555555556,
+                    "#d8576b"
+                  ],
+                  [
+                    0.6666666666666666,
+                    "#ed7953"
+                  ],
+                  [
+                    0.7777777777777778,
+                    "#fb9f3a"
+                  ],
+                  [
+                    0.8888888888888888,
+                    "#fdca26"
+                  ],
+                  [
+                    1.0,
+                    "#f0f921"
+                  ]
+                ]
+              }
+            ],
+            "surface": [
+              {
+                "type": "surface",
+                "colorbar": {
+                  "outlinewidth": 0,
+                  "ticks": ""
+                },
+                "colorscale": [
+                  [
+                    0.0,
+                    "#0d0887"
+                  ],
+                  [
+                    0.1111111111111111,
+                    "#46039f"
+                  ],
+                  [
+                    0.2222222222222222,
+                    "#7201a8"
+                  ],
+                  [
+                    0.3333333333333333,
+                    "#9c179e"
+                  ],
+                  [
+                    0.4444444444444444,
+                    "#bd3786"
+                  ],
+                  [
+                    0.5555555555555556,
+                    "#d8576b"
+                  ],
+                  [
+                    0.6666666666666666,
+                    "#ed7953"
+                  ],
+                  [
+                    0.7777777777777778,
+                    "#fb9f3a"
+                  ],
+                  [
+                    0.8888888888888888,
+                    "#fdca26"
+                  ],
+                  [
+                    1.0,
+                    "#f0f921"
+                  ]
+                ]
+              }
+            ],
+            "mesh3d": [
+              {
+                "type": "mesh3d",
+                "colorbar": {
+                  "outlinewidth": 0,
+                  "ticks": ""
+                }
+              }
+            ],
+            "scatter": [
+              {
+                "fillpattern": {
+                  "fillmode": "overlay",
+                  "size": 10,
+                  "solidity": 0.2
+                },
+                "type": "scatter"
+              }
+            ],
+            "parcoords": [
+              {
+                "type": "parcoords",
+                "line": {
+                  "colorbar": {
+                    "outlinewidth": 0,
+                    "ticks": ""
+                  }
+                }
+              }
+            ],
+            "scatterpolargl": [
+              {
+                "type": "scatterpolargl",
+                "marker": {
+                  "colorbar": {
+                    "outlinewidth": 0,
+                    "ticks": ""
+                  }
+                }
+              }
+            ],
+            "bar": [
+              {
+                "error_x": {
+                  "color": "#2a3f5f"
+                },
+                "error_y": {
+                  "color": "#2a3f5f"
+                },
+                "marker": {
+                  "line": {
+                    "color": "#E5ECF6",
+                    "width": 0.5
+                  },
+                  "pattern": {
+                    "fillmode": "overlay",
+                    "size": 10,
+                    "solidity": 0.2
+                  }
+                },
+                "type": "bar"
+              }
+            ],
+            "scattergeo": [
+              {
+                "type": "scattergeo",
+                "marker": {
+                  "colorbar": {
+                    "outlinewidth": 0,
+                    "ticks": ""
+                  }
+                }
+              }
+            ],
+            "scatterpolar": [
+              {
+                "type": "scatterpolar",
+                "marker": {
+                  "colorbar": {
+                    "outlinewidth": 0,
+                    "ticks": ""
+                  }
+                }
+              }
+            ],
+            "histogram": [
+              {
+                "marker": {
+                  "pattern": {
+                    "fillmode": "overlay",
+                    "size": 10,
+                    "solidity": 0.2
+                  }
+                },
+                "type": "histogram"
+              }
+            ],
+            "scattergl": [
+              {
+                "type": "scattergl",
+                "marker": {
+                  "colorbar": {
+                    "outlinewidth": 0,
+                    "ticks": ""
+                  }
+                }
+              }
+            ],
+            "scatter3d": [
+              {
+                "type": "scatter3d",
+                "line": {
+                  "colorbar": {
+                    "outlinewidth": 0,
+                    "ticks": ""
+                  }
+                },
+                "marker": {
+                  "colorbar": {
+                    "outlinewidth": 0,
+                    "ticks": ""
+                  }
+                }
+              }
+            ],
+            "scattermap": [
+              {
+                "type": "scattermap",
+                "marker": {
+                  "colorbar": {
+                    "outlinewidth": 0,
+                    "ticks": ""
+                  }
+                }
+              }
+            ],
+            "scattermapbox": [
+              {
+                "type": "scattermapbox",
+                "marker": {
+                  "colorbar": {
+                    "outlinewidth": 0,
+                    "ticks": ""
+                  }
+                }
+              }
+            ],
+            "scatterternary": [
+              {
+                "type": "scatterternary",
+                "marker": {
+                  "colorbar": {
+                    "outlinewidth": 0,
+                    "ticks": ""
+                  }
+                }
+              }
+            ],
+            "scattercarpet": [
+              {
+                "type": "scattercarpet",
+                "marker": {
+                  "colorbar": {
+                    "outlinewidth": 0,
+                    "ticks": ""
+                  }
+                }
+              }
+            ],
+            "carpet": [
+              {
+                "aaxis": {
+                  "endlinecolor": "#2a3f5f",
+                  "gridcolor": "white",
+                  "linecolor": "white",
+                  "minorgridcolor": "white",
+                  "startlinecolor": "#2a3f5f"
+                },
+                "baxis": {
+                  "endlinecolor": "#2a3f5f",
+                  "gridcolor": "white",
+                  "linecolor": "white",
+                  "minorgridcolor": "white",
+                  "startlinecolor": "#2a3f5f"
+                },
+                "type": "carpet"
+              }
+            ],
+            "table": [
+              {
+                "cells": {
+                  "fill": {
+                    "color": "#EBF0F8"
+                  },
+                  "line": {
+                    "color": "white"
+                  }
+                },
+                "header": {
+                  "fill": {
+                    "color": "#C8D4E3"
+                  },
+                  "line": {
+                    "color": "white"
+                  }
+                },
+                "type": "table"
+              }
+            ],
+            "barpolar": [
+              {
+                "marker": {
+                  "line": {
+                    "color": "#E5ECF6",
+                    "width": 0.5
+                  },
+                  "pattern": {
+                    "fillmode": "overlay",
+                    "size": 10,
+                    "solidity": 0.2
+                  }
+                },
+                "type": "barpolar"
+              }
+            ],
+            "pie": [
+              {
+                "automargin": true,
+                "type": "pie"
+              }
+            ]
+          },
+          "layout": {
+            "autotypenumbers": "strict",
+            "colorway": [
+              "#636efa",
+              "#EF553B",
+              "#00cc96",
+              "#ab63fa",
+              "#FFA15A",
+              "#19d3f3",
+              "#FF6692",
+              "#B6E880",
+              "#FF97FF",
+              "#FECB52"
+            ],
+            "font": {
+              "color": "#2a3f5f"
+            },
+            "hovermode": "closest",
+            "hoverlabel": {
+              "align": "left"
+            },
+            "paper_bgcolor": "white",
+            "plot_bgcolor": "#E5ECF6",
+            "polar": {
+              "bgcolor": "#E5ECF6",
+              "angularaxis": {
+                "gridcolor": "white",
+                "linecolor": "white",
+                "ticks": ""
+              },
+              "radialaxis": {
+                "gridcolor": "white",
+                "linecolor": "white",
+                "ticks": ""
+              }
+            },
+            "ternary": {
+              "bgcolor": "#E5ECF6",
+              "aaxis": {
+                "gridcolor": "white",
+                "linecolor": "white",
+                "ticks": ""
+              },
+              "baxis": {
+                "gridcolor": "white",
+                "linecolor": "white",
+                "ticks": ""
+              },
+              "caxis": {
+                "gridcolor": "white",
+                "linecolor": "white",
+                "ticks": ""
+              }
+            },
+            "coloraxis": {
+              "colorbar": {
+                "outlinewidth": 0,
+                "ticks": ""
+              }
+            },
+            "colorscale": {
+              "sequential": [
+                [
+                  0.0,
+                  "#0d0887"
+                ],
+                [
+                  0.1111111111111111,
+                  "#46039f"
+                ],
+                [
+                  0.2222222222222222,
+                  "#7201a8"
+                ],
+                [
+                  0.3333333333333333,
+                  "#9c179e"
+                ],
+                [
+                  0.4444444444444444,
+                  "#bd3786"
+                ],
+                [
+                  0.5555555555555556,
+                  "#d8576b"
+                ],
+                [
+                  0.6666666666666666,
+                  "#ed7953"
+                ],
+                [
+                  0.7777777777777778,
+                  "#fb9f3a"
+                ],
+                [
+                  0.8888888888888888,
+                  "#fdca26"
+                ],
+                [
+                  1.0,
+                  "#f0f921"
+                ]
+              ],
+              "sequentialminus": [
+                [
+                  0.0,
+                  "#0d0887"
+                ],
+                [
+                  0.1111111111111111,
+                  "#46039f"
+                ],
+                [
+                  0.2222222222222222,
+                  "#7201a8"
+                ],
+                [
+                  0.3333333333333333,
+                  "#9c179e"
+                ],
+                [
+                  0.4444444444444444,
+                  "#bd3786"
+                ],
+                [
+                  0.5555555555555556,
+                  "#d8576b"
+                ],
+                [
+                  0.6666666666666666,
+                  "#ed7953"
+                ],
+                [
+                  0.7777777777777778,
+                  "#fb9f3a"
+                ],
+                [
+                  0.8888888888888888,
+                  "#fdca26"
+                ],
+                [
+                  1.0,
+                  "#f0f921"
+                ]
+              ],
+              "diverging": [
+                [
+                  0,
+                  "#8e0152"
+                ],
+                [
+                  0.1,
+                  "#c51b7d"
+                ],
+                [
+                  0.2,
+                  "#de77ae"
+                ],
+                [
+                  0.3,
+                  "#f1b6da"
+                ],
+                [
+                  0.4,
+                  "#fde0ef"
+                ],
+                [
+                  0.5,
+                  "#f7f7f7"
+                ],
+                [
+                  0.6,
+                  "#e6f5d0"
+                ],
+                [
+                  0.7,
+                  "#b8e186"
+                ],
+                [
+                  0.8,
+                  "#7fbc41"
+                ],
+                [
+                  0.9,
+                  "#4d9221"
+                ],
+                [
+                  1,
+                  "#276419"
+                ]
+              ]
+            },
+            "xaxis": {
+              "gridcolor": "white",
+              "linecolor": "white",
+              "ticks": "",
+              "title": {
+                "standoff": 15
+              },
+              "zerolinecolor": "white",
+              "automargin": true,
+              "zerolinewidth": 2
+            },
+            "yaxis": {
+              "gridcolor": "white",
+              "linecolor": "white",
+              "ticks": "",
+              "title": {
+                "standoff": 15
+              },
+              "zerolinecolor": "white",
+              "automargin": true,
+              "zerolinewidth": 2
+            },
+            "scene": {
+              "xaxis": {
+                "backgroundcolor": "#E5ECF6",
+                "gridcolor": "white",
+                "linecolor": "white",
+                "showbackground": true,
+                "ticks": "",
+                "zerolinecolor": "white",
+                "gridwidth": 2
+              },
+              "yaxis": {
+                "backgroundcolor": "#E5ECF6",
+                "gridcolor": "white",
+                "linecolor": "white",
+                "showbackground": true,
+                "ticks": "",
+                "zerolinecolor": "white",
+                "gridwidth": 2
+              },
+              "zaxis": {
+                "backgroundcolor": "#E5ECF6",
+                "gridcolor": "white",
+                "linecolor": "white",
+                "showbackground": true,
+                "ticks": "",
+                "zerolinecolor": "white",
+                "gridwidth": 2
+              }
+            },
+            "shapedefaults": {
+              "line": {
+                "color": "#2a3f5f"
+              }
+            },
+            "annotationdefaults": {
+              "arrowcolor": "#2a3f5f",
+              "arrowhead": 0,
+              "arrowwidth": 1
+            },
+            "geo": {
+              "bgcolor": "white",
+              "landcolor": "#E5ECF6",
+              "subunitcolor": "white",
+              "showland": true,
+              "showlakes": true,
+              "lakecolor": "white"
+            },
+            "title": {
+              "x": 0.05
+            },
+            "mapbox": {
+              "style": "light"
+            }
+          }
+        },
+        "polar": {
+          "angularaxis": {
+            "tickfont": {
+              "size": 13
+            },
+            "tickmode": "array",
+            "tickvals": [
+              0.0,
+              45.0,
+              90.0,
+              135.0,
+              180.0,
+              225.0,
+              270.0,
+              315.0
+            ],
+            "ticktext": [
+              "0–15 min",
+              "15–30 min",
+              "30–45 min",
+              "45–60 min",
+              "1–1.5 h",
+              "1.5–2 h",
+              "2–4 h",
+              ">4 h"
+            ],
+            "direction": "clockwise",
+            "rotation": 90,
+            "showline": true,
+            "linewidth": 1.4,
+            "linecolor": "black",
+            "gridcolor": "black",
+            "griddash": "solid",
+            "gridwidth": 1.2
+          },
+          "radialaxis": {
+            "tickfont": {
+              "size": 12,
+              "color": "rgba(110,110,110,0.95)"
+            },
+            "range": [
+              0,
+              0.22370000000000004
+            ],
+            "tickvals": [
+              0.0,
+              0.06666666666666667,
+              0.13333333333333333,
+              0.2
+            ],
+            "ticktext": [
+              "0.00",
+              "0.07",
+              "0.13",
+              "0.20"
+            ],
+            "showline": true,
+            "linewidth": 1.7,
+            "gridcolor": "black",
+            "griddash": "solid",
+            "gridwidth": 1.5,
+            "linecolor": "black",
+            "angle": 67.5
+          },
+          "bargap": 0.04
+        },
+        "margin": {
+          "t": 30,
+          "b": 30,
+          "l": 28,
+          "r": 28
+        },
+        "title": {},
+        "showlegend": false,
+        "paper_bgcolor": "rgba(0,0,0,0)",
+        "plot_bgcolor": "rgba(0,0,0,0)",
+        "autosize": true,
+        "barmode": "stack"
+      }
+    }
+  },
+  "webapp_panels": {
+    "duration_main": "windrose_total_time_population"
+  },
+  "meta": {
+    "angle_mode": "total_time",
+    "n_total_time_sectors": 8,
+    "top_categories_per_wedge": 4
+  }
+}
