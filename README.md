@@ -4,6 +4,8 @@ This repository contains source code for a simple yet visually appealing Python 
 
 The dashboard is structured as PowerPoint-like with a total of five slides, including a home page, and can be navigated supposedly easy by providing a side navigation bar to jump to any slides or to come back to home. **Each slide contains (multiple) interactive and beautifully-designed figures** for the user to appreciate at. The figures are also accompanied by some detailed texts explaining the 5W1H of the corresponding analysis.
 
+Example panel: ![Network Graph of Ingredients](\figures\network_graph.png)
+
 ## Running
 
 The dashboard can be run with `Python 3.11` and it is recommended to do so within a virtual environment to avoid dependencies' conflicts. Install the required packages first by running
