@@ -1,15 +1,8 @@
 #!/usr/bin/env python3
 """
 Functions to build the cooking-time duration figure used by the web app.
-
-The pipeline:
-1. loads only the recipe/review columns needed for this visualization,
-2. cleans and filters time-related fields,
-3. aggregates review statistics per recipe,
-4. builds an intermediate windrose-style payload, and
-5. exports the final Plotly JSON payload for the app.
-
-No processed table is exported; only the figure payload is written out.
+The figure's data and metadata are exported as a standalone JSON.
+No processed data being output!
 """
 
 from __future__ import annotations
