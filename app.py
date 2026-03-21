@@ -12,76 +12,54 @@ Run with:
 
 from flask import Flask, render_template
 from pathlib import Path
-import importlib.util
 import json
 
-# ── Local source imports ───────────────────────────────────────────────────
-
-from src.plot_ingredients import (
-    plot_ingredient_network_from_export,
-    plot_ingredient_leiden_graph_from_export,
-    plot_leiden_community_size_bar_from_export,
-    plot_ingredient_cooccurrence_heatmap_clustered_from_export,
-    plot_top_ingredient_pairs_from_export,
-)
-from src.plot_nutrition import replot_exported_nutrition_figure
-from src.content import (
-    NETWORK_CAPTION, NETWORK_INSIGHT_TITLE, NETWORK_INSIGHT_SUBTITLE,
-    NETWORK_INSIGHT_FINDINGS, NETWORK_INSIGHT_READ, NETWORK_INSIGHT_TOPPAIR,
-    NETWORK_INSIGHT_METHOD, NETWORK_INSIGHT_HEATMAP,
-    NETWORK_HL_1_VALUE, NETWORK_HL_1_LABEL,
-    NETWORK_HL_2_VALUE, NETWORK_HL_2_LABEL,
-    NETWORK_HL_3_VALUE, NETWORK_HL_3_LABEL,
-    LEIDEN_CAPTION, LEIDEN_INSIGHT_TITLE, LEIDEN_INSIGHT_SUBTITLE,
-    LEIDEN_INSIGHT_FINDINGS, LEIDEN_INSIGHT_WHAT, LEIDEN_INSIGHT_INTERPRET,
-    LEIDEN_INSIGHT_READ, LEIDEN_INSIGHT_METHOD,
-    NUTRITION_CAPTION, NUTRITION_INSIGHT_TITLE, NUTRITION_INSIGHT_SUBTITLE,
-    NUTRITION_INSIGHT_WHAT, NUTRITION_INSIGHT_LOADING, NUTRITION_INSIGHT_FINDINGS,
-    NUTRITION_INSIGHT_INTERPRET, NUTRITION_INSIGHT_METHOD,
-    NUTHEAT_CAPTION, NUTHEAT_INSIGHT_WHAT, NUTHEAT_INSIGHT_READ,
-    NUTHEAT_INSIGHT_WHY, NUTHEAT_INSIGHT_FINDINGS, NUTHEAT_INSIGHT_INTERPRET,
-    NUTHEAT_INSIGHT_METHOD,
-    WINDROSE_CAPTION, WINDROSE_INSIGHT_TITLE, WINDROSE_INSIGHT_SUBTITLE,
-    WINDROSE_INSIGHT_FINDINGS, WINDROSE_INSIGHT_METHOD,
-    FEATURE_CAPTION, FEATURE_INSIGHT_SUBTITLE, FEATURE_INSIGHT_TITLE,
-    FEATURE_INSIGHT_CONTEXT, FEATURE_INSIGHT_EXPECT, FEATURE_INSIGHT_METHOD,
-    FEATURE_INSIGHT_FINDINGS_ORANGE, FEATURE_INSIGHT_FINDINGS_BLUE, FEATURE_INSIGHT_FINDINGS_GREEN, FEATURE_INSIGHT_FINDINGS_RED, 
-    FEATURE_INSIGHT_INTERPRET, FEATURE_INSIGHT_SUMMARY,
-    RELIABLE_INSIGHT_TITLE, RELIABLE_CAPTION, RELIABLE_INSIGHT_SUBTITLE,
-    RELIABLE_INSIGHT_INTERPRET, RELIABLE_INSIGHT_FINDINGS, RELIABLE_INSIGHT_WHAT,
-)
+from src.content import *
 
 # ── Paths ──────────────────────────────────────────────────────────────────
 
 BASE_DIR            = Path(__file__).resolve().parent
-WINDROSE_OUTPUT_DIR = BASE_DIR / "plots" / "cooking_time_outputs"
-NUTRITION_OUTPUT_DIR = BASE_DIR / "plots" / "nutritional_landscape_outputs"
 
-FEATURE_OUTPUT_DIR = BASE_DIR / "plots" / "review_level_outputs"
-FEATURE_JSON_PATH  = FEATURE_OUTPUT_DIR / "plot_feature_review_level.json"
+INGREDIENT_OUTPUT_DIR = BASE_DIR / "plots"
+INGREDIENT_JSON_PATH = INGREDIENT_OUTPUT_DIR / "plot_ingredients.json"
 
-# ── Dynamic import for plot_duration (avoids package collision) ────────────
+NUTRITION_OUTPUT_DIR = BASE_DIR / "plots"
+NUTRITION_JSON_PATH = NUTRITION_OUTPUT_DIR / "plot_nutrition.json"
 
-def _load_windrose_module():
-    spec = importlib.util.spec_from_file_location(
-        "plot_effort_reward",
-        BASE_DIR / "src" / "plot_duration.py",
-    )
-    module = importlib.util.module_from_spec(spec)
-    assert spec.loader is not None
-    spec.loader.exec_module(module)
-    return module
+WINDROSE_OUTPUT_DIR = BASE_DIR / "plots"
+WINDROSE_JSON_PATH  = WINDROSE_OUTPUT_DIR / "plot_duration.json"
 
-_windrose_module      = _load_windrose_module()
-replot_exported_windrose = _windrose_module.replot_exported_windrose
+FEATURE_OUTPUT_DIR = BASE_DIR / "plots"
+FEATURE_JSON_PATH  = FEATURE_OUTPUT_DIR / "plot_features.json"
 
 # ── Pre-build all figures at startup (cached as JSON strings) ──────────────
+
+def _load_duration_payload():
+    if not WINDROSE_JSON_PATH.exists():
+        return {}
+
+    with open(WINDROSE_JSON_PATH, "r", encoding="utf-8") as f:
+        return json.load(f)
 
 def _load_feature_payload():
     if not FEATURE_JSON_PATH.exists():
         return {}
 
     with open(FEATURE_JSON_PATH, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+def _load_ingredient_payload():
+    if not INGREDIENT_JSON_PATH.exists():
+        return {}
+
+    with open(INGREDIENT_JSON_PATH, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+def _load_nutrition_payload():
+    if not NUTRITION_JSON_PATH.exists():
+        return {}
+
+    with open(NUTRITION_JSON_PATH, "r", encoding="utf-8") as f:
         return json.load(f)
 
 def _build_figures():
@@ -91,30 +69,39 @@ def _build_figures():
     """
     figs = {}
 
-    # Ingredient network figures
-    figs["network"]      = plot_ingredient_network_from_export().to_json()
-    figs["heatmap"]      = plot_ingredient_cooccurrence_heatmap_clustered_from_export().to_json()
-    figs["top_pairs"]    = plot_top_ingredient_pairs_from_export().to_json()
-    figs["leiden"]       = plot_ingredient_leiden_graph_from_export().to_json()
-    figs["leiden_comm"]  = plot_leiden_community_size_bar_from_export().to_json()
+    # Ingredient figures (from precomputed full Plotly JSON)
+    ingredient_payload = _load_ingredient_payload()
+    ingredient_standalone = ingredient_payload.get("standalone_figures", {})
+    ingredient_panels = ingredient_payload.get("webapp_panels", {})
 
-    # Nutrition figures
-    for key in (
-        "nutrition_pca_landscape",
-        "nutrition_cluster_heatmap",
-        "nutrition_pca_loadings",
-        "nutrition_pca_categories",
-        "nutrition_cluster_categories",
-    ):
-        figs[key] = replot_exported_nutrition_figure(
-            fig_key=key, output_dir=str(NUTRITION_OUTPUT_DIR)
-        ).to_json()
+    ingredient_main_key = ingredient_panels.get("ingredient_main", "ingredient_network")
+    ingredient_alt_key = ingredient_panels.get("ingredient_alt", "ingredient_leiden_graph")
+    figs["network"] = json.dumps(ingredient_standalone.get(ingredient_main_key, {}))
+    figs["heatmap"] = json.dumps(ingredient_standalone.get("ingredient_clustered_heatmap", {}))
+    figs["top_pairs"] = json.dumps(ingredient_standalone.get("ingredient_top_pairs", {}))
+    figs["leiden"] = json.dumps(ingredient_standalone.get(ingredient_alt_key, {}))
+    figs["leiden_comm"] = json.dumps(ingredient_standalone.get("ingredient_leiden_community_sizes", {}))
 
-    # Windrose
-    figs["windrose"] = replot_exported_windrose(
-        fig_key="windrose_total_time_population",
-        output_dir=WINDROSE_OUTPUT_DIR,
-    ).to_json()
+    # Nutrition figures (from precomputed full Plotly JSON)
+    nutrition_payload = _load_nutrition_payload()
+    nutrition_standalone = nutrition_payload.get("standalone_figures", {})
+    nutrition_panels = nutrition_payload.get("webapp_panels", {})
+
+    nutrition_main_key = nutrition_panels.get("nutrition_main", "nutrition_pca_landscape")
+    nutrition_alt_key = nutrition_panels.get("nutrition_alt", "nutrition_cluster_heatmap")
+    figs["nutrition_pca_landscape"] = json.dumps(nutrition_standalone.get(nutrition_main_key, {}))
+    figs["nutrition_cluster_heatmap"] = json.dumps(nutrition_standalone.get(nutrition_alt_key, {}))
+    figs["nutrition_pca_loadings"] = json.dumps(nutrition_standalone.get("nutrition_pca_loadings", {}))
+    figs["nutrition_pca_categories"] = json.dumps(nutrition_standalone.get("nutrition_pca_categories", {}))
+    figs["nutrition_cluster_categories"] = json.dumps(nutrition_standalone.get("nutrition_cluster_categories", {}))
+
+    # Windrose (from precomputed full Plotly JSON)
+    duration_payload = _load_duration_payload()
+    duration_standalone = duration_payload.get("standalone_figures", {})
+    duration_panels = duration_payload.get("webapp_panels", {})
+
+    duration_main_key = duration_panels.get("duration_main", "windrose_total_time_population")
+    figs["windrose"] = json.dumps(duration_standalone.get(duration_main_key, {}))
 
     # Feature-importance figures (from precomputed export JSON)
     feature_payload = _load_feature_payload()
