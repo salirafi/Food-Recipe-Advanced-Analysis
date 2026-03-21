@@ -200,80 +200,87 @@ NUTRITION_INSIGHT_WHAT = """
 Before trying to understand the figure, it is important to understand that each recipe originally lives in a high-dimensional nutritional space that consists of
 calories, fat, protein, etc. (as well as other derived quantities not originally present in the dataset).
 Visualizing this directly is impossible, so to make this interpretable, we first use the so-called <a href=https://en.wikipedia.org/wiki/Principal_component_analysis>Principal Component Analysis</a> (PCA)
-to <strong>compress all nutritional variables into two main axes that preserve as much variation as possible.</strong> 
-In the figure, each point represents a recipe, and its position is determined by these two components: the first principal component PC1, which accounts for 33.2% of the dataset variance,
-and the second principal component PC2, which accounts for 24.5% of the variance.
-Together, they already summarize more than half of the nutritional diversity in the dataset. Recipes that are close together have similar nutritional profiles, 
+to <strong>compress all nutritional variables into two main axes that preserve as much variation as possible.</strong>
+In the figure, each point represents a recipe, and its position is determined by these two components: the first principal component PC1, which accounts for 30.3% of the dataset variance,
+and the second principal component PC2, which accounts for 23.4% of the variance.
+Together, they already summarize more than half of the nutritional diversity in the dataset. Recipes that are close together have similar nutritional profiles,
 even if they belong to very different categories.
-Although PCA allows us to uncover the dominant directions of variation (essentially identifying the main “axes” along which recipes differ nutritionally),
+Although PCA allows us to uncover the dominant directions of variation (essentially identifying the main "axes" along which recipes differ nutritionally),
 alone it only reveals structure, not segmentation.
 To help interpretation, we overlay a clustering model, specifically a <a href=https://www.ibm.com/think/topics/gaussian-mixture-model#:~:text=A%20Gaussian%20mixture%20model%20(GMM,weighted%20by%20a%20mixing%20coefficient.>Gaussian Mixture Model</a> (GMM),
 which groups recipes into (seven) clusters. Unlike simpler methods, GMM assumes that each cluster follows a probabilistic distribution,
 allowing soft boundaries and better handling of overlapping nutritional patterns.
-This is why in the plot, clusters are not sharply separated; instead, they blend into each other.
+Rather than plotting individual points alone, the figure overlays <strong>contour lines</strong> for each cluster, which trace the density regions of each group.
+This makes it easier to see how clusters are shaped, where they overlap, and which regions of the nutritional space they dominate, 
+without the individual points obscuring the broader structure.
 </p>
 """
 
 NUTRITION_INSIGHT_FINDINGS = """
 <p>
-Each point in the figure is a recipe, and the distance between points reflects similarity in nutritional composition. 
-For example, the horizontal axis (PC1) separates low-calory vs high-calory recipes (among others),  
-while the vertical axis (PC2) captures differences in sugar, fiber, and sodium content (again, among others).
-Colors indicate cluster membership, with each cluster representing a group of recipes that share a similar nutritional structure. 
-Several large-scale patterns become immediately visible. 
-The landscape stretches roughly diagonally, indicating that the dominant variation is not isolated to a single nutrient but reflects combined trade-offs between the nutrients.
-Recipes toward the right tend to be more nutricious (in absolute terms), while those on the left are more associated with "light snacks" recipes with low nutrition content.  
-For example, on the right-hand side, clusters (e.g., clusters 2 and 6) concentrate recipes with higher protein, 
-while the left-hand side, including clusters 3 and 5, captures recipes that are lower in protein. 
-The lower region of the plot contains clusters characterized by weaker nutritional balance with low fiber and higher carbohydrates (not shown on the hover box),
-while the upper recipes contain much more sugar than the lower ones, but both sides contain relatively similar sodium.
+Each point in the figure is a recipe, and the distance between points reflects similarity in nutritional composition.
+The horizontal axis (PC1) primarily separates low-calorie, lean recipes on the left from calorie-dense, macro-heavy recipes on the right,
+while the vertical axis (PC2) captures differences in sugar and fiber content versus protein density (explained further in the loading plot below).
+Colors indicate cluster membership, with each cluster representing a group of recipes that share a similar nutritional structure,
+and the contour lines around each cluster show where its recipes are most densely concentrated.
+Several large-scale patterns become immediately visible.
+The landscape stretches roughly horizontally, with the most important variation running left to right along PC1,
+reflecting the dominant role of overall caloric and macronutrient magnitude in separating recipes.
+Clusters 5 (orange-red) and 6 (dark red/brown) anchor the right side of the landscape, representing the most calorie- and fat-dense recipes,
+while cluster 2 (teal) spreads far to the left, capturing lighter, lower-calorie recipes.
+Clusters 0 (dark purple) and 1 (blue) occupy the central-left region, representing moderate nutritional content,
+while clusters 3 (green) and 4 (yellow-orange) sit in the center to center-right, reflecting intermediate but increasingly macro-rich profiles.
+Vertically, recipes higher on PC2 tend to be richer in sugar and fiber from complex carbohydrate sources,
+while lower PC2 values indicate more protein-dense and sodium-forward recipes.
+Notably, the contour lines reveal significant overlap across nearly all clusters in the central region,
+confirming that the nutritional space is continuous rather than sharply partitioned.
+</p>
 """
 
 NUTRITION_INSIGHT_LOADING = """
 To understand the PCA plot further, the below "loading" plot is given.
 The plot explains <strong>what drives the structure of the nutritional landscape</strong> by showing how each nutritional feature contributes to the two principal components.
-Each bar represents the weight (loading) of a feature in defining either PC1 or PC2. 
-a large positive loading means the feature pushes recipes toward the positive end of that axis, and a negative loading pulls them toward the negative end, 
+Each bar represents the weight (loading) of a feature in defining either PC1 or PC2.
+A large positive loading means the feature pushes recipes toward the positive end of that axis, and a negative loading pulls them toward the negative end,
 while values near zero indicate little contribution.
 
-PC1 is dominated by large positive loadings across nearly every feature such as 
-Calories (~0.40), ProteinContent (~0.41), FatContent (~0.39), and CarbohydrateContent (~0.20), 
-but with the notable exception of SugarPer100Cal (~−0.19) and SatFatShareOfFat (~−0.18), which are slightly negative. 
-This tells us that PC1 is essentially an overall nutritional magnitude or "richness" axis 
-where <strong>recipes scoring high on PC1 tend to be calorie-dense and macro-heavy across the board (high protein, fat, sodium, carbs), 
-while recipes at the low end are lean and sparse.</strong> 
-Because the per-100-calorie ratio features (ProteinPer100Cal, SugarPer100Cal) load differently from their raw counterparts, 
-PC1 is specifically capturing absolute quantity rather than nutritional quality per calorie. 
+PC1 carries large positive loadings across most absolute nutrient features:
+Calories (~0.36), FatContent (~0.38), SaturatedFatContent (~0.35), SodiumContent (~0.31), ProteinContent (~0.36), and notably CholesterolContent (~0.37).
+However, ProteinPer100Cal loads strongly negative on PC1 (~−0.31), as do FiberPer100Cal and CholesterolPer100Cal to a lesser degree.
+This tells us that PC1 is an overall nutritional magnitude or "bulk richness" axis, or in other words, 
+<strong>recipes scoring high on PC1 tend to be large, calorie-dense, and heavy across all macronutrients in absolute terms,
+while recipes at the low end are lean and sparse.</strong>
+Crucially, the strong negative loading of ProteinPer100Cal means that high-PC1 recipes are not necessarily protein-efficient;
+they are simply large. A recipe can be high in absolute protein but still rank low in protein per calorie.
 
-PC2 tells a more nuanced story: it carries strong positive loadings on SugarContent (~0.50), CarbohydrateContent (~0.37), 
-Calories (~0.25), FatContent (~0.33), and FiberContent (~0.16), 
-but distinctly negative loadings on SugarShareOfCarbs (~−0.33), ProteinPer100Cal (~−0.19), SodiumContent (~−0.06), and SodiumPer100Cal (~−0.06). 
-This means PC2 represents a sweet-versus-savory or carbohydrate-quality axis where 
-<strong> a high PC2 score indicates a recipe is calorie-rich from carbohydrates and fat</strong>
-but those carbohydrates come from complex or diverse sources (since SugarShareOfCarbs is negative, meaning sugar is a small fraction of the total carbs), 
-<strong>while a low PC2 score would indicate high-protein, high-sodium, and sugar-dominant compositions</strong> 
-typical of savory or processed foods. 
+PC2 tells a more nuanced story: it carries strong positive loadings on SugarContent (~0.44), FiberContent (~0.41),
+CarbohydrateContent (~0.25), SugarPer100Cal (~0.34), and CarbPer100Cal (~0.30),
+but a distinctly strong negative loading on ProteinPer100Cal (~−0.31).
+This means PC2 represents a <strong>carbohydrate-and-sugar richness versus protein efficiency</strong> axis where 
+recipes scoring high on PC2 derive much of their energy from sugars and fiber-containing carbohydrates (think desserts and baked goods),
+while <strong>low PC2 scores point to recipes with high protein density per calorie</strong>,
+typical of lean savory dishes or protein-forward meals.
 Together, these loadings show that the entire landscape is structured by two fundamental forces:
-<strong>(1) total nutrient density and (2) the relative balance between sugar, protein, and other nutrients,</strong> 
-providing the physical interpretation behind the PCA map and allowing us to understand why clusters and gradients appear in specific regions of the nutritional space.
+<strong>(1) total nutrient bulk and (2) the balance between carbohydrate/sugar richness and protein efficiency per calorie,</strong>
+providing the physical interpretation behind the PCA map and explaining why clusters and gradients appear in specific regions of the nutritional space.
 </p>
 """
 
 NUTRITION_INSIGHT_INTERPRET = """
 <p>
-<strong>This landscape reveals that recipes are not randomly distributed but organized along a few fundamental nutritional gradients.</strong> 
-Rather than forming distinct and isolated groups, recipes occupy a continuous space shaped by trade-offs. 
-The clustering helps summarize this structure, but it should not be interpreted as defining strict categories. 
-One important caveat is that clusters are not compact islands but elongated regions, which reflects a key limitation of clustering: 
-the boundaries are model-imposed rather than naturally existing. 
-GMM improves flexibility compared to simpler clustering algorithm like K-means, 
-but it still assumes Gaussian shapes, which may not perfectly match real nutritional distributions. 
-As a result, some recipes near cluster boundaries could reasonably belong to multiple groups, which is partially captured by the model’s confidence scores,
-and not entirely surprising because it is consistent with how real-world food behaves. 
-To show this, when we overlay traditional recipe categories like shown below, we observe significant overlap, 
-suggesting that <strong> common labels such as “Dessert” or “Meal” are not distinctly different and do not fully capture nutritional reality.</strong>
+<strong>This landscape reveals that recipes are not randomly distributed but organized along a few fundamental nutritional gradients.</strong>
+Rather than forming distinct and isolated groups, recipes occupy a continuous space shaped by trade-offs.
+The clustering and its associated contour lines help summarize this structure, but they should not be interpreted as defining strict categories.
+One important caveat is that cluster contours are not compact islands but broadly overlapping regions, which reflects a key limitation of clustering:
+the boundaries are model-imposed rather than naturally existing.
+GMM improves flexibility compared to simpler clustering algorithms like K-means,
+but it still assumes Gaussian shapes, which may not perfectly match real nutritional distributions.
+As a result, some recipes near cluster boundaries could reasonably belong to multiple groups,
+which is partially captured by the model's confidence scores, and not entirely surprising because it is consistent with how real-world food behaves.
+To show this, when we overlay traditional recipe categories as shown below, we observe significant overlap across the entire landscape,
+suggesting that <strong>common labels such as "Dessert" or "Meal" are not nutritionally distinct and do not fully capture nutritional reality.</strong>
 This means that, when your friend says they eat veggies everyday, depending on what veggies they eat, that does not necessarily mean that they are healthy,
-because veggies spans a whole range of nutrient compositions.
+because veggies span a whole range of nutrient compositions.
 </p>
 """
 NUTRITION_INSIGHT_METHOD = """
@@ -340,38 +347,62 @@ Reading across a row reveals the nutritional “signature” of a cluster.
 NUTHEAT_INSIGHT_FINDINGS = """
 <p>
 At first glance, it may be hard to see standing-out patterns between the clusters, and that is not surprising.
-We already see from the PCA landscape figure that lots of regions filled with overlapping clusters here and there,
-however we can still see extreme characteristics from some clusters.
-For example, cluster 2 stands out clearly in the absolute content panel where it shows very high values in calories, fat, and fiber in absolute terms (around >1), 
-but less nutritious with negative values in sugar, protein, sodium, and even fiber per 100 calories. 
-This is important point because only looking at the PCA map tells us that the right-side region is highly nutritious.
-That is indeed correct but what it is not telling us is that most of them are large-serving recipes, with obviously more nutritions.
-Looking at the heatmap then shows us another interesting perspective where we now know that this cluster maybe represents less dense meals, and indeed, 
-we can see in the PCA map that most members are desserts.
-Cluster 1 presents a contrasting profile, 
-where it has extremely high sugar content (+2.31) while being low in protein and fiber. 
-In the PCA map, we can see that most of the recipes in this cluster can be seen fall into the "Dessert" category with dense sugar content,
-meaning it may be similar to cluster 2 but with much less serving portions.
-Cluster 6 represents another distinct group: high and dense protein and fiber content (from the absolute and per-calorie panels) with moderate calorie levels. 
-This suggests that this cluster is highly and effectively nutritious, mostly associated with lean protein or balanced meals.
-Once again, from the PCA map, it shows that most of cluster 6's members fall into the meat-like category with high protein.
-This is roughly similar to cluster 0 above it with even much more protein content. 
-In fact, cluster 0 has the highest protein density, which means <strong>your expensive protein powder can be replaced by almost every recipes within cluster 0 :)</strong>
-Lastly, cluster 5 shows low values across most nutrients but a sharp spike in sugar per calorie, 
-indicating poor nutritional density which mostly be found in beverages and snacks.
+We already see from the PCA landscape figure that lots of regions are filled with overlapping clusters here and there;
+however, we can still spot extreme characteristics from several clusters.
+For example, <strong>cluster 6</strong> stands out immediately in the absolute content panel with an extremely high sugar value (+2.32),
+which is by far the highest z-score across the entire heatmap.
+Looking at the per-calorie panel confirms this: cluster 6 also leads in SugarPer100Cal (+2.19),
+while showing negative values for protein, fiber, and sodium density.
+This makes cluster 6 a clearly sugar-dominated group, and unsurprisingly,
+the category chart below reveals that Desserts alone account for 44.3% of its recipes — with Bar Cookies and Drop Cookies filling additional slots.
 </p>
 <p>
-All of the above findings are supported and can be easily spotted by the figure below showing the top 5 recipe categories in terms of number of recipes for each cluster.
-Immediately we can see some interesting features such as "Desserts" dominating cluster 1, "Beverages" dominating cluster 5, while meat-like products dominating cluster 0.
+<strong>Cluster 5</strong> is another notable case: it shows the highest absolute calorie (+1.66) and fat (+1.37) values among all clusters.
+Yet its per-calorie panel tells a more nuanced story: sodium, fiber, and carb densities are all significantly negative,
+meaning these are high-calorie recipes that are not particularly nutritionally efficient beyond their fat load.
+The category chart shows Pork (16.3%) as the top category here, alongside chicken and one-dish meals,
+suggesting this cluster captures rich, fatty meat-heavy preparations.
+</p>
+<p>
+<strong>Cluster 4</strong> shares a similar high-fat, high-protein profile in absolute terms (Fat: +1.37, Protein: +1.91),
+but the per-calorie panel reveals a much higher fat density (+1.52) and cholesterol density (+1.43),
+paired with very negative fiber density (−1.46). This points to calorie-dense, protein-rich recipes that are heavy on animal fat 
+(think indulgent meat or cheese-forward dishes) consistent with the category breakdown showing a spread across Chicken, Meat, Pork, and One Dish Meal.
+</p>
+<p>
+In contrast, <strong>cluster 0</strong> presents a far more nutritionally efficient profile.
+Its absolute content shows elevated fiber (+1.00), while the per-calorie panel shows the highest ProteinPer100Cal across all clusters (+2.01),
+very high CarbPer100Cal (+1.49), and the lowest FatPer100Cal (−1.96).
+This makes cluster 0 the leanest and most protein-dense cluster relative to its calorie count.
+The category chart confirms this: Pork and Chicken top its composition, but these are clearly the leaner preparations.
+<strong>In other words, your expensive protein powder can likely be replaced by almost any recipe within cluster 0 :)</strong>
+</p>
+<p>
+<strong>Cluster 3</strong> is a quieter but similarly lean group with mostly negative or near-zero in absolute terms,
+yet it shows a notably high ProteinPer100Cal (+1.36) and high CholesterolPer100Cal (+1.31) in the per-calorie panel.
+This suggests lean protein sources where the cholesterol comes along for the ride (think chicken breast or eggs),
+consistent with its category mix of Chicken, Vegetables, One Dish Meals, and Breakfast items.
+</p>
+<p>
+Finally, <strong>cluster 2</strong> shows the most uniformly negative absolute values across nearly all nutrients,
+indicating low-calorie, low-everything recipes. Its per-calorie panel is relatively flat as well,
+with only a modest sugar density bump. The category chart places Pork (17.2%) at the top 
+(likely lighter pork preparations) alongside Vegetables and Desserts, suggesting this cluster captures lighter or smaller-serving recipes across multiple food types.
 </p>
 """
+
 NUTHEAT_INSIGHT_INTERPRET = """
 <p>
-One thing we can take away from this analysis is the distinction between quantity and quality. 
-A recipe can appear nutrient-rich in absolute terms simply because it is large, but when normalized per calorie, its nutritional value may be low. 
-The heatmap makes this trade-off explicit. For example, some clusters are high in protein but also high in sodium, 
-while others achieve high fiber and protein with relatively lower sugar. 
-<strong>This highlights that nutrition is inherently multidimensional, and improving one aspect often comes at the cost of another.</strong>
+One key takeaway from this analysis is the distinction between quantity and quality.
+A recipe can appear nutrient-rich in absolute terms simply because it is large or calorie-dense,
+but when normalized per calorie, its nutritional value may look very different.
+The heatmap makes this trade-off explicit: cluster 4 and cluster 5, for instance,
+both look impressive in absolute fat and protein, yet their per-calorie profiles reveal limited fiber
+and, in cluster 5's case, low overall nutrient density.
+Meanwhile, cluster 0, which does not dominate the absolute panel, emerges as the clear winner
+in protein efficiency once calorie context is applied.
+<strong>This highlights that nutrition is inherently multidimensional: raw content totals can be misleading,
+and meaningful dietary insight requires looking at both what a recipe contains and how efficiently it delivers those nutrients per calorie.</strong>
 </p>
 """
 NUTHEAT_INSIGHT_METHOD = """
