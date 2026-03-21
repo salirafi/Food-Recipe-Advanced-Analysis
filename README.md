@@ -36,3 +36,7 @@ As the homepage states, the analysis conducted to build this project is limited 
 If there are some problems or improvements to the analysis, I am widely opened to any suggestions and critics. Please feel free to reach me through salirafi8@gmail.com or just open an issue in this repo :)
 
 The use of generative AI includes: Visual Studio Code's Copilot to help tidying up code and writing comments and docstring, as well as OpenAI's Chat GPT to help with code syntax ideas and identify runtime error. Outside of those, including problem formulation and framework of thinking, code logical reasoning and writing, from database management using SQLite to web development using Flask, all is done mostly by the author.
+
+## Data Sources
+
+Only one dataset used in this analysis: [The Food.com - Recipes and Reviews](https://www.kaggle.com/datasets/irkaal/foodcom-recipes-and-reviews) dataset available publicly through Kaggle.
