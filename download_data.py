@@ -19,7 +19,7 @@ DATASET = "irkaal/foodcom-recipes-and-reviews"
 def main() -> None:
     """Download the Food.com recipes and reviews dataset to the raw data folder."""
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    kagglehub.dataset_download(DATASET, output_dir=OUTPUT_DIR)
+    kagglehub.dataset_download(DATASET, output_dir=OUTPUT_DIR, force_download=True) # last argument to replace existing files in the raw folder
     print(f"Downloaded '{DATASET}' to: {OUTPUT_DIR}")
 
 
