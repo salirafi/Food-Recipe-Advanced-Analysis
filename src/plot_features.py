@@ -110,12 +110,14 @@ APP_FIGURE_KEYS = {
 # Helpers
 # ##################
 def hex_to_rgba(h: str, a: float = 1.0) -> str:
+    """Convert a hex color to plotly rgba so we can control opacity separately"""
     h = h.lstrip("#")
     r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
     return f"rgba({r},{g},{b},{a})"
 
 
 def pretty_feature_name(s: pd.Series) -> pd.Series:
+    """Clean internal feature names into labels that are easier to read in the figures"""
     return (
         s.astype(str)
         .str.replace("cat_", "", regex=False)
@@ -126,6 +128,7 @@ def pretty_feature_name(s: pd.Series) -> pd.Series:
 
 
 def _count_list_items(series: pd.Series) -> pd.Series:
+    """Count list-like entries stored as strings such as ingredient or keyword arrays"""
     def _count(val):
         if pd.isna(val) or str(val).strip() == "":
             return 0
@@ -135,23 +138,27 @@ def _count_list_items(series: pd.Series) -> pd.Series:
 
 
 def _count_steps(series: pd.Series) -> pd.Series:
+    """Estimate the number of meaningful instruction steps from free-text instructions"""
     def _count(val):
         if pd.isna(val) or str(val).strip() == "":
             return 0
         val = re.sub(r"[\[\]\"']", "", str(val))
+        # split on sentence boundaries or pipe separators because both appear in scraped instruction text
         parts = re.split(r"(?<=[.!?])\s+|\|", val)
+        # require a minimum length so tiny fragments do not become fake steps
         return max(1, len([p for p in parts if len(p.strip()) > 10]))
     return series.apply(_count)
 
 
 def _technique_score(series: pd.Series) -> pd.Series:
+    """Count how often technique-related cooking verbs appear in the instruction text"""
     pattern = "|".join(TECHNIQUE_KEYWORDS)
     return series.fillna("").str.lower().str.count(pattern)
 
 
 def apply_single_figure_layout(
     fig: go.Figure,
-    title: str = "",
+    # title: str = "",
     *,
     height: int = 600,
     showlegend: bool = False,
@@ -181,12 +188,14 @@ def apply_single_figure_layout(
 
 
 def figure_to_payload(fig: go.Figure) -> dict:
+    """Convert a plotly figure into plain json-safe data for the web app"""
     return json.loads(json.dumps(fig.to_plotly_json(), cls=PlotlyJSONEncoder))
 
 # ##################
 # Feature Pipeline
 # ##################
 def load_data() -> tuple[pd.DataFrame, pd.DataFrame]:
+    """load the raw recipe and review tables from sqlite"""
     print("Loading data...")
     conn = sqlite3.connect(DB_PATH)
     recipes = pd.read_sql("SELECT * FROM recipes", conn)
@@ -198,18 +207,22 @@ def load_data() -> tuple[pd.DataFrame, pd.DataFrame]:
 
 
 def clean_recipes(recipes: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
+    """Clean recipe fields and engineer recipe-level predictors for the models"""
     print("Cleaning recipes...")
     df = recipes.copy()
 
     for col in NUTRITION_COLS + TIME_COLS + ["AggregatedRating", "ReviewCount", "RecipeServings"]:
         if col in df.columns:
+            # coerce invalid strings to nan so later numeric operations behave predictably
             df[col] = pd.to_numeric(df[col], errors="coerce")
 
     df["ReviewCount"] = df["ReviewCount"].fillna(0)
+    # very low-review recipes are removed so recipe-level signals are not dominated by extremely sparse examples
     df = df[df["ReviewCount"] >= MIN_RECIPE_REVIEWS].copy()
 
     for col in NUTRITION_COLS + TIME_COLS:
         if col in df.columns:
+            # clip extreme outliers because a few pathological values can dominate tree splits and feature scales
             cap = df[col].quantile(0.99)
             df[col] = df[col].clip(upper=cap)
 
@@ -217,6 +230,7 @@ def clean_recipes(recipes: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
         df[col] = df[col].fillna(df[col].median())
 
     for col in TIME_COLS:
+        # time variables are strongly right-skewed so log1p makes them easier for the model to use
         df[f"log_{col}"] = np.log1p(df[col].fillna(0))
 
     df["ingredient_count"] = _count_list_items(df["RecipeIngredientParts"])
@@ -237,6 +251,7 @@ def clean_recipes(recipes: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
     df["RecipeCategory_clean"] = df["RecipeCategory"].where(
         df["RecipeCategory"].isin(top_cats), other="Other"
     )
+    # collapse rare categories into other to keep the dummy matrix from exploding in width
     cat_dummies = pd.get_dummies(df["RecipeCategory_clean"], prefix="cat", drop_first=True)
     df = pd.concat([df, cat_dummies], axis=1)
 
@@ -245,14 +260,17 @@ def clean_recipes(recipes: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
 
 
 def clean_reviews(reviews: pd.DataFrame, recipes: pd.DataFrame) -> pd.DataFrame:
+    """Clean review rows and keep only reviews that still match the filtered recipe table"""
     print("Cleaning reviews...")
     df = reviews.copy()
     df["Rating"] = pd.to_numeric(df["Rating"], errors="coerce")
     df = df.dropna(subset=["Rating", "RecipeId", "AuthorId"])
+    # ratings outside the expected star range are treated as invalid records
     df = df[df["Rating"].between(1, 5)]
 
     valid_recipe_ids = set(recipes["RecipeId"].astype(str))
     df["RecipeId"] = df["RecipeId"].astype(str)
+    # this keeps the review table aligned with the already filtered recipe table
     df = df[df["RecipeId"].isin(valid_recipe_ids)]
 
     for col in ["DateSubmitted", "DateModified"]:
@@ -264,19 +282,37 @@ def clean_reviews(reviews: pd.DataFrame, recipes: pd.DataFrame) -> pd.DataFrame:
 
 
 def score_sentiment(reviews: pd.DataFrame) -> pd.DataFrame:
+    """Score each review with vader and remap the compound score onto the 1 to 5 star scale"""
     print("Scoring sentiment (VADER)...")
     analyzer = SentimentIntensityAnalyzer()
     texts = reviews["Review"].fillna("").astype(str).tolist()
-    scores = [analyzer.polarity_scores(t)["compound"] for t in texts]
+    scores = [analyzer.polarity_scores(t)["compound"] for t in texts] # performing the sentiment analyses -> ouputting the sentiment score
 
     reviews = reviews.copy()
     reviews["sentiment_raw"] = scores
+    # remapping to the star scale makes the sentiment and rating directly comparable when computing the gap
     reviews["sentiment_scaled"] = (np.array(scores) + 1) / 2 * 4 + 1
     print(f"    Sentiment scored for {len(reviews):,} reviews.")
     return reviews
 
 
 def engineer_reviewer_features(reviews: pd.DataFrame) -> pd.DataFrame:
+    """
+    ((This docstring is created by ChatGPT))
+    Construct reviewer-level behavioral features using a leave-one-out strategy to avoid target leakage.
+
+    This function aggregates each reviewer's historical rating behavior and derives features such as
+    mean rating, rating variability, and activity level. All statistics are computed in a
+    leave-one-out manner, meaning the current review is excluded from its own feature calculation.
+    This prevents leakage where the model could trivially learn the target from features derived using
+    the same data point.
+
+    Features created:
+    - reviewer_total_reviews: total number of reviews written by the reviewer,
+    - reviewer_loo_mean: mean rating of the reviewer excluding the current review,
+    - reviewer_loo_std: standard deviation of ratings excluding the current review,
+    - reviewer_log_reviews: log-scaled review count to reduce skew in activity levels,
+    """
     print("Engineering reviewer features (leave-one-out)...")
     rev_stats = (
         reviews.groupby("AuthorId")["Rating"]
@@ -289,6 +325,7 @@ def engineer_reviewer_features(reviews: pd.DataFrame) -> pd.DataFrame:
     )
 
     df = reviews.merge(rev_stats, on="AuthorId", how="left")
+    # leave-one-out averages prevent a review from making its own target easier to predict
     df["reviewer_loo_mean"] = (
         (df["reviewer_sum_rating"] - df["Rating"])
         / (df["reviewer_total_reviews"] - 1).clip(lower=1)
@@ -301,11 +338,13 @@ def engineer_reviewer_features(reviews: pd.DataFrame) -> pd.DataFrame:
     loo_n = (n - 1).clip(lower=1)
     loo_s = s - r
     loo_sq = sq - r**2
+    # compute leave-one-out variance from aggregated sums instead of an expensive per-row group recalculation
     loo_var = (loo_sq - loo_s**2 / loo_n.clip(lower=1)) / (loo_n - 1).clip(lower=1)
     df["reviewer_loo_std"] = np.sqrt(loo_var.clip(lower=0))
     df["reviewer_log_reviews"] = np.log1p(df["reviewer_total_reviews"])
     df["reviewer_loo_std"] = df["reviewer_loo_std"].fillna(0)
     df["reviewer_loo_mean"] = df["reviewer_loo_mean"].fillna(df["Rating"].mean())
+    # extremely sparse reviewers do not have stable history-based features so we drop them
     df = df[df["reviewer_total_reviews"] >= MIN_REVIEWER_REVIEWS]
 
     print(f"    Reviews after reviewer filter: {len(df):,}")
@@ -313,6 +352,36 @@ def engineer_reviewer_features(reviews: pd.DataFrame) -> pd.DataFrame:
 
 
 def build_joint(reviews: pd.DataFrame, recipes: pd.DataFrame) -> pd.DataFrame:
+    """
+    ((This docstring is created by ChatGPT))
+    Merge review-level and recipe-level datasets and engineer contextual interaction features.
+
+    This function constructs a unified dataframe where each row represents a single review
+    enriched with both recipe attributes and contextual signals about when and how the review
+    was written.
+
+    Engineered feature groups:
+    - time-based:
+        - days_since_pub: time difference between review submission and recipe publication
+        - log_days_since_pub: log-transformed version to reduce skew
+    - lifecycle / sequence:
+        - review_position: order of the review within a recipe
+        - log_review_position: log-transformed version
+    - text:
+        - review_length: character length of the review text
+        - log_review_length: log-transformed version
+    - reviewer-category interaction:
+        - reviewer_category_familiarity: number of prior reviews by the same author in the same category
+        - log_cat_familiarity: log-transformed version
+    - target engineering:
+        - gap: difference between rating and sentiment
+
+    Notes:
+    - only a slim subset of recipe columns is used to keep the merge efficient
+    - log1p is used to stabilize highly skewed distributions
+    - chronological sorting ensures that cumulative counts (e.g. familiarity, position) are valid
+    - missing publication dates are handled by defaulting to zero
+    """
     print("Joining reviews with recipe features...")
     recipe_feature_cols = (
         NUTRITION_COLS
@@ -327,6 +396,7 @@ def build_joint(reviews: pd.DataFrame, recipes: pd.DataFrame) -> pd.DataFrame:
     )
     recipe_feature_cols = [c for c in recipe_feature_cols if c in recipes.columns]
 
+    # keep only the fields we need so the merge stays lighter and easier to reason about
     recipes_slim = recipes[["RecipeId"] + recipe_feature_cols].copy()
     recipes_slim["RecipeId"] = recipes_slim["RecipeId"].astype(str)
     joint = reviews.merge(recipes_slim, on="RecipeId", how="inner")
@@ -336,17 +406,20 @@ def build_joint(reviews: pd.DataFrame, recipes: pd.DataFrame) -> pd.DataFrame:
         joint["days_since_pub"] = (
             joint["DateSubmitted"] - joint["DatePublished"]
         ).dt.days.clip(lower=0)
+        # timing since publication is highly skewed so we log-transform it just like the time fields
         joint["log_days_since_pub"] = np.log1p(joint["days_since_pub"].fillna(0))
     else:
         joint["log_days_since_pub"] = 0.0
 
     joint = joint.sort_values(["RecipeId", "DateSubmitted"])
+    # order reviews within each recipe so we can capture whether a review came early or late in the lifecycle
     joint["review_position"] = joint.groupby("RecipeId").cumcount() + 1
     joint["log_review_position"] = np.log1p(joint["review_position"])
 
     joint["review_length"] = joint["Review"].fillna("").str.len()
     joint["log_review_length"] = np.log1p(joint["review_length"])
 
+    # this counts how many earlier reviews the same author wrote in the same category
     cat_familiarity = (
         joint.groupby(["AuthorId", "RecipeCategory"])
         .cumcount()
@@ -354,6 +427,7 @@ def build_joint(reviews: pd.DataFrame, recipes: pd.DataFrame) -> pd.DataFrame:
     )
     joint["reviewer_category_familiarity"] = cat_familiarity.values
     joint["log_cat_familiarity"] = np.log1p(joint["reviewer_category_familiarity"])
+    # positive gap means the written sentiment sounds less positive than the assigned star rating
     joint["gap"] = joint["Rating"] - joint["sentiment_scaled"]
 
     print(f"    Joint dataframe: {len(joint):,} rows")
@@ -361,6 +435,35 @@ def build_joint(reviews: pd.DataFrame, recipes: pd.DataFrame) -> pd.DataFrame:
 
 
 def build_feature_matrix(joint: pd.DataFrame, cat_cols: list[str]):
+    """
+    Construct model-ready feature matrices and organize features into conceptual groups.
+    Feature groups:
+    - recipe_features:
+        intrinsic properties of the recipe (nutrition, time, structure, category indicators)
+    - reviewer_features:
+        behavioral statistics of the reviewer (leave-one-out mean/std, activity, familiarity)
+    - review_context_features:
+        situational context of the review (timing, position, length)
+
+    Outputs:
+    - X_base:
+        feature matrix without sentiment (used for predicting rating and gap)
+    - X_with_sentiment:
+        same as X_base but includes sentiment_scaled as an additional predictor
+        (used for modeling interactions between sentiment and other features)
+    - y_star:
+        target variable for rating prediction
+    - y_sentiment:
+        target variable for sentiment prediction
+    - y_gap:
+        target variable for disagreement between rating and sentiment
+    - feat_groups:
+        dictionary mapping each feature to its conceptual group
+
+    Notes:
+    - median imputation is used as a simple, robust default suitable for tree-based models,
+    - constant columns are removed since they provide no predictive signal and can distort importance metrics,
+    """
     print("Building feature matrix...")
     recipe_features = (
         NUTRITION_COLS
@@ -386,9 +489,11 @@ def build_feature_matrix(joint: pd.DataFrame, cat_cols: list[str]):
 
     for col in all_features:
         if joint[col].dtype in [np.float64, np.int64, float, int]:
+            # median imputation is a simple robust default for tree models and avoids dropping rows here
             joint[col] = joint[col].fillna(joint[col].median())
 
     X_base = joint[all_features].astype(float)
+    # constant columns carry no signal and can confuse downstream summaries so we remove them
     X_base = X_base.loc[:, X_base.nunique() > 1]
 
     X_with_sentiment = X_base.copy()
@@ -419,11 +524,14 @@ def build_feature_matrix(joint: pd.DataFrame, cat_cols: list[str]):
 # ##################
 # Modeling and summaries
 # ##################
+
 def train_lgb(X: pd.DataFrame, y: np.ndarray, label: str):
+    """Train a lightgbm regressor and report whole-dataset fit metrics for the exported summary"""
     from sklearn.metrics import mean_squared_error, r2_score
     from sklearn.model_selection import train_test_split
 
     print(f"Training LightGBM [{label}]...")
+    # keep a validation split for early stopping so the large tree ensemble does not overtrain unnecessarily
     X_tr, X_val, y_tr, y_val = train_test_split(X, y, test_size=0.15, random_state=RANDOM_STATE)
     model = lgb.LGBMRegressor(**LGB_PARAMS)
     model.fit(
@@ -435,6 +543,7 @@ def train_lgb(X: pd.DataFrame, y: np.ndarray, label: str):
             lgb.log_evaluation(period=-1),
         ],
     )
+    # predictions are computed on the full matrix because the exported summary is descriptive rather than a strict benchmark
     y_pred = model.predict(X)
     r2 = r2_score(y, y_pred)
     rmse = np.sqrt(mean_squared_error(y, y_pred))
@@ -442,8 +551,10 @@ def train_lgb(X: pd.DataFrame, y: np.ndarray, label: str):
     return model, r2, rmse, y_pred
 
 def compute_shap(model, X: pd.DataFrame, label: str, sample_size: int = SHAP_SAMPLE_SIZE):
+    """Compute SHAP values on a capped sample so interpretation stays feasible on large datasets"""
     print(f"Computing SHAP [{label}] on {min(len(X), sample_size):,} samples...")
     if len(X) > sample_size:
+        # shap can be expensive so we subsample deterministically for reproducible figure content
         idx = np.random.RandomState(RANDOM_STATE).choice(len(X), sample_size, replace=False)
         X_sample = X.iloc[idx]
     else:
@@ -451,11 +562,13 @@ def compute_shap(model, X: pd.DataFrame, label: str, sample_size: int = SHAP_SAM
 
     explainer = shap.TreeExplainer(model)
     shap_vals = explainer.shap_values(X_sample)
+    # mean absolute shap is used because we care about overall influence strength regardless of sign
     mean_abs = pd.Series(np.abs(shap_vals).mean(axis=0), index=X_sample.columns, name=f"shap_{label}")
     print(f"    Top feature: {mean_abs.idxmax()} ({mean_abs.max():.5f})")
     return shap_vals, mean_abs, X_sample
 
 def decompose_shap_by_group(mean_abs_shap: pd.Series, feat_groups: dict[str, str]) -> pd.DataFrame:
+    """Sum mean absolute SHAP values within each feature family for high-level decomposition plots"""
     rows = []
     total = mean_abs_shap.sum()
     group_sums: dict[str, float] = {}
@@ -479,6 +592,7 @@ def build_shap_comparison_table(
     top_n: int = 80,
     rank_by: str = "mean",
 ) -> pd.DataFrame:
+    """Combine SHAP summaries from the three models into one comparison table"""
     df = pd.concat(
         [
             shap_star.rename("star"),
@@ -492,6 +606,7 @@ def build_shap_comparison_table(
     norm = df[["star", "sentiment", "gap"]].copy()
     for c in ["star", "sentiment", "gap"]:
         s = norm[c].sum()
+        # normalize within each model so models with larger absolute shap scales can still be compared visually
         norm[c] = norm[c] / s if s > 0 else 0.0
 
     df["star_norm"] = norm["star"]
@@ -507,6 +622,7 @@ def build_shap_comparison_table(
 
     df["feature_group"] = [feat_groups.get(f, "other") for f in df.index]
 
+    # ternary coordinates show how each feature splits its influence across the three prediction tasks
     tri_sum = df[["star", "sentiment", "gap"]].sum(axis=1).replace(0, np.nan)
     df["tri_star"] = df["star"] / tri_sum
     df["tri_sentiment"] = df["sentiment"] / tri_sum
@@ -521,12 +637,14 @@ def build_shap_comparison_table(
     return df
 
 def category_reliability(joint: pd.DataFrame, top_n: int = TOP_N_CATEGORIES) -> pd.DataFrame:
+    """Measure how strongly written sentiment and star ratings agree within each recipe category"""
     print(f"\nComputing category reliability map (top {top_n})...")
     top_cats = joint["RecipeCategory"].value_counts().nlargest(top_n).index.tolist()
 
     results = []
     for cat in top_cats:
         sub = joint[joint["RecipeCategory"] == cat]
+        # skip tiny categories because correlation estimates are too noisy there
         if len(sub) < 50:
             continue
 
@@ -537,6 +655,7 @@ def category_reliability(joint: pd.DataFrame, top_n: int = TOP_N_CATEGORIES) -> 
         mean_star = sub["Rating"].mean()
         mean_sent = sub["sentiment_scaled"].mean()
 
+        # the thresholds are heuristic labels meant for interpretation in the web app rather than formal inference
         label = "Reliable" if r_pearson >= 0.5 else "Moderate" if r_pearson >= 0.3 else "Unreliable"
         results.append({
             "category": cat,
@@ -558,6 +677,7 @@ def category_reliability(joint: pd.DataFrame, top_n: int = TOP_N_CATEGORIES) -> 
 # ##################
 
 def add_grouped_shap_bar(fig, comp_df: pd.DataFrame, row: int, col: int):
+    """Add grouped bars comparing normalized shap importance across the three models"""
     d = comp_df.copy()
     d["feature_pretty"] = pretty_feature_name(d["feature"])
     d = d.sort_values("rank_score", ascending=True)
@@ -584,11 +704,13 @@ def add_grouped_shap_bar(fig, comp_df: pd.DataFrame, row: int, col: int):
     fig.update_yaxes(title_text="", row=row, col=col)
 
 def add_shap_ternary(fig, comp_df: pd.DataFrame, row: int, col: int):
+    """Add the ternary scatter that shows each feature's role split across rating sentiment and gap"""
     d = comp_df.copy()
     d["feature_pretty"] = pretty_feature_name(d["feature"])
 
     total_raw = d[["star", "sentiment", "gap"]].sum(axis=1)
     denom = max(float(total_raw.max()), 1e-12)
+    # marker size encodes total raw importance so both direction and magnitude are visible at once
     d["marker_size"] = 12 + 36 * (total_raw / denom)
 
     for grp in d["feature_group"].unique():
@@ -674,6 +796,7 @@ def add_shap_ridge_violin(
     row: int,
     col: int,
 ):
+    """Add violin traces that approximate a ridge plot for per-sample shap distributions"""
     d = comp_df.copy()
     d["feature_pretty"] = pretty_feature_name(d["feature"])
     d = d.sort_values("rank_score", ascending=True)
@@ -682,6 +805,7 @@ def add_shap_ridge_violin(
     idx_sent = {f: i for i, f in enumerate(X_samp_sent.columns)}
     idx_gap = {f: i for i, f in enumerate(X_samp_gap.columns)}
 
+    # cap the number of samples to keep the figure responsive while still showing the overall distribution shape
     ridge_n = min(6000, len(X_samp_star), len(X_samp_sent), len(X_samp_gap))
     rng = np.random.RandomState(RANDOM_STATE)
     take_star = rng.choice(len(X_samp_star), ridge_n, replace=False) if len(X_samp_star) > ridge_n else np.arange(len(X_samp_star))
@@ -730,6 +854,7 @@ def make_combined_decomposition_figure(
     decomp_sent: pd.DataFrame,
     decomp_gap: pd.DataFrame,
 ) -> go.Figure:
+    """Build the three-panel decomposition figure for rating sentiment and gap"""
     fig = make_subplots(
         rows=1, cols=3,
         specs=[[{"type": "bar"}, {"type": "bar"}, {"type": "bar"}]],
@@ -768,6 +893,7 @@ def make_combined_decomposition_figure(
     return apply_single_figure_layout(fig, "Combined SHAP Variance Decomposition", height=560)
 
 def make_rating_histogram(joint: pd.DataFrame) -> go.Figure:
+    """Build a simple histogram of the observed star ratings"""
     fig = go.Figure(go.Histogram(
         x=joint["Rating"].values, nbinsx=5, marker_color=C["star"], marker_opacity=0.8,
         hovertemplate="Rating: %{x}<br>Count: %{y:,}<extra></extra>", showlegend=False,
@@ -777,11 +903,13 @@ def make_rating_histogram(joint: pd.DataFrame) -> go.Figure:
     return apply_single_figure_layout(fig, "Star Rating Distribution", height=450)
 
 def make_category_reliability_figure(cat_rel: pd.DataFrame) -> go.Figure:
+    """Build the category reliability bar chart from the precomputed correlation table"""
     d = cat_rel.copy().sort_values("pearson_r", ascending=False).reset_index(drop=True)
     d["category_pretty"] = d["category"].astype(str).str.replace("_", " ", regex=False)
 
     r_min = float(d["pearson_r"].min())
     r_max = float(d["pearson_r"].max())
+    # guard against a zero range so color normalization never divides by zero
     denom = max(r_max - r_min, 1e-9)
     norm = ((d["pearson_r"] - r_min) / denom).clip(0, 1)
     bar_colors = sample_colorscale(
@@ -871,11 +999,13 @@ def make_category_reliability_figure(cat_rel: pd.DataFrame) -> go.Figure:
     return fig
 
 def make_grouped_shap_figure(comp_df: pd.DataFrame) -> go.Figure:
+    """Wrapper for the grouped shap comparison figure"""
     fig = make_subplots(rows=1, cols=1, specs=[[{"type": "bar"}]])
     add_grouped_shap_bar(fig, comp_df, row=1, col=1)
     return apply_single_figure_layout(fig, "Grouped Cross-Model SHAP Comparison", height=750, showlegend=True, barmode="group")
 
 def make_ternary_figure(comp_df: pd.DataFrame) -> go.Figure:
+    """Wrapper for the ternary feature-role figure"""
     fig = make_subplots(rows=1, cols=1, specs=[[{"type": "ternary"}]])
     add_shap_ternary(fig, comp_df, row=1, col=1)
     fig.update_layout(
@@ -906,6 +1036,7 @@ def make_ridge_figure(
     X_samp_sent: pd.DataFrame,
     X_samp_gap: pd.DataFrame,
 ) -> go.Figure:
+    """Wrapper for the ridge-style shap distribution figure"""
     fig = make_subplots(rows=1, cols=1, specs=[[{"type": "violin"}]])
     add_shap_ridge_violin(fig, comp_df, sv_star, sv_sent, sv_gap, X_samp_star, X_samp_sent, X_samp_gap, row=1, col=1)
     return apply_single_figure_layout(fig, "Ridge-Style SHAP Distribution by Feature", height=850, showlegend=False)
@@ -937,6 +1068,7 @@ def build_app_payload(
     X_samp_sent: pd.DataFrame,
     X_samp_gap: pd.DataFrame,
 ) -> dict:
+    """Assemble the final json payload consumed by the static web app"""
     print("\nBuilding app payload...")
 
     meta = {
@@ -951,6 +1083,7 @@ def build_app_payload(
         "mean_sentiment": round(float(joint["sentiment_scaled"].mean()), 4),
     }
 
+    # keep only the top features for app figures so the payload stays lighter and the plots remain readable
     comp_df = build_shap_comparison_table(
         shap_star=shap_star,
         shap_sent=shap_sent,
@@ -991,6 +1124,7 @@ def build_app_payload(
     }
 
 def save_app_json(payload: dict) -> str:
+    """write the final payload to disk for later use by the web app"""
     out = os.path.join(OUTPUT_DIR, "plot_features.json")
     with open(out, "w") as f:
         json.dump(payload, f, default=str, indent=2)
@@ -1001,11 +1135,13 @@ def save_app_json(payload: dict) -> str:
 # MAIN
 # ##################
 def main():
+    """run the end-to-end feature importance pipeline and export the web app payload"""
     print("\n============================")
     print("  Feature Importance Pipeline")
     print("=================================\n")
 
     recipes, reviews = load_data()
+    # useful for quick debugging runs when the full dataset is too slow
     # recipes, reviews = recipes.head(10000), reviews.head(50000)
     recipes, cat_cols = clean_recipes(recipes)
     reviews = clean_reviews(reviews, recipes)
