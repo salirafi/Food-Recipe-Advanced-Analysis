@@ -29,9 +29,9 @@ html, body {
     overflow-x: hidden;
 }
 
-/* ===============
+/* ══════════════════════════════════════════════════════════════
    LEFT SIDEBAR NAV
-   =============== */
+   ══════════════════════════════════════════════════════════════ */
 
 .sidenav {
     position: fixed;
@@ -226,9 +226,9 @@ html, body {
     justify-content: center;
 }
 
-/* ===============
+/* ══════════════════════════════════════════════════════════════
    PAGE LAYOUT — offset content by sidebar width
-   =============== */
+   ══════════════════════════════════════════════════════════════ */
 
 body {
     padding-left: var(--sidebar-w);
@@ -263,9 +263,9 @@ main {
 .hero h1 em { color: var(--blue-600); font-style: italic; }
 .hero-sub { margin-top: 4px; font-size: 0.78rem; color: var(--muted); font-weight: 300; }
 
-/* ===============
+/* ══════════════════════════════════════════════════════════════
    CAROUSEL
-   =============== */
+   ══════════════════════════════════════════════════════════════ */
 .carousel-outer {
     position: relative;
     width: min(98vw, 1400px);
@@ -305,9 +305,9 @@ main {
 .slides-track.animating { transition: transform 0.55s cubic-bezier(0.77, 0, 0.18, 1); }
 .slide { min-width: 100%; width: 100%; }
 
-/* ===============
+/* ══════════════════════════════════════════════════════════════
    PLOT CARD
-   =============== */
+   ══════════════════════════════════════════════════════════════ */
 .plot-card {
     background: var(--white);
     border-radius: 20px;
@@ -369,9 +369,9 @@ main {
 }
 .caption p { font-size: 0.77rem; color: var(--muted); line-height: 1.65; font-weight: 300; }
 
-/* ===============
+/* ══════════════════════════════════════════════════════════════
    INSIGHT PANEL
-   =============== */
+   ══════════════════════════════════════════════════════════════ */
 .insight-panel {
     position: absolute;
     top: 47px; /* toolbar height */
@@ -431,9 +431,9 @@ main {
 .insight-pairs-chart   { width: 100%; max-width: none; min-height: 520px; margin: 14px auto 0; display: block; }
 .insight-nutrition-chart { width: 100%; max-width: none; min-height: 520px; margin: 14px auto 0; display: block; }
 
-/* ===============
+/* ══════════════════════════════════════════════════════════════
    COUNTER / DOTS
-   =============== */
+   ══════════════════════════════════════════════════════════════ */
 .counter {
     font-size: 0.75rem; color: var(--muted);
     letter-spacing: 0.08em; font-weight: 500;
@@ -454,11 +454,11 @@ main {
 .dot-nav.active { background: var(--blue-600); transform: scale(1.35); }
 
 /* ── FOOTER ── */
-footer { margin-top: 28px; font-size: 0.70rem; color: var(--blue-200); letter-spacing: 0.04em; }
+footer { margin-top: 15px; font-size: 0.70rem; color: var(--blue-200); letter-spacing: 0.04em; }
 
-/* ===============
+/* ══════════════════════════════════════════════════════════════
    HOME SLIDE  — reduced bottom whitespace
-   =============== */
+   ══════════════════════════════════════════════════════════════ */
 .home-slide {
     min-width: 100%;
     width: 100%;
@@ -562,9 +562,9 @@ footer { margin-top: 28px; font-size: 0.70rem; color: var(--blue-200); letter-sp
     to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ===============
+/* ══════════════════════════════════════════════════════════════
    APP PAGE  (bloom explorer)
-   =============== */
+   ══════════════════════════════════════════════════════════════ */
 
 .app-main {
     position: fixed;
@@ -760,6 +760,8 @@ footer { margin-top: 28px; font-size: 0.70rem; color: var(--blue-200); letter-sp
     .plot-search-wrap { width: min(260px, 42vw); }
 }
 
+
+
 .feature-placeholder-area {
     display: flex;
     align-items: center;
@@ -864,4 +866,23 @@ footer { margin-top: 28px; font-size: 0.70rem; color: var(--blue-200); letter-sp
     .feature-kpi-row {
         grid-template-columns: 1fr;
     }
+}
+
+.github-link {
+  /* display: inline-flex;
+  align-items: center; */
+  gap: 6px;
+  color: inherit;
+  line-height: 0;
+  /* position: relative;
+  top: 2px;
+  bottom: 12px; */
+}
+
+.github-icon {
+  width: 16px;
+  height: 16px;
+  /* display: block; */
+  position: relative;
+  top: 4px;
 }
